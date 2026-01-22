@@ -1,5 +1,4 @@
 import subprocess
-#from calendar import month
 from collections import Counter
 from dataclasses import dataclass, asdict
 import shutil
@@ -14,7 +13,6 @@ from PIL import Image
 from deep_translator import GoogleTranslator
 import piexif
 from geopy.distance import geodesic
-#from sentence_transformers import SentenceTransformer
 from transformers import BlipProcessor, BlipForConditionalGeneration
 import requests
 
@@ -105,7 +103,7 @@ class FileInfo:
     date: Optional[datetime]
     lat: Optional[float]
     lon: Optional[float]
-    address: Address
+    address: Optional[Address]
     keywords: list[str]
     keywordsGerman: list[str]
     caption: str
@@ -125,7 +123,7 @@ class FileInfo:
             date=datetime.fromisoformat(data["date"]) if data["date"] else None,
             lat=data.get("lat"),
             lon=data.get("lon"),
-            address=Address.from_dict(data.get("address")),
+            address=Address.from_dict(data.get("address") or {}),
             keywords=data.get("keywords", []),
             keywordsGerman=data.get("keywordsGerman", []),
             caption=data.get("caption", ""),
@@ -135,10 +133,11 @@ class FileInfo:
 @dataclass
 class FolderInfo:
     start_date: datetime
-    end_date: datetime
-    place: str
+    end_date: Optional[datetime]
+    place: Optional[str]
     keywordsGerman: set[str]
     files: list[FileInfo]
+    path: Optional[Path] = None
 
 
 # Helpers
@@ -179,11 +178,12 @@ def get_exif_gps(img_path):
         if lat and lon:
             lat = rational_to_deg(lat)
             lon = rational_to_deg(lon)
-            if lat_ref == 'S':
-                lat = -lat
-            if lon_ref == 'W':
-                lon = -lon
-            return lat, lon
+            if lat is not None and lon is not None:
+                if lat_ref == 'S':
+                    lat = -lat
+                if lon_ref == 'W':
+                    lon = -lon
+                return lat, lon
         return None, None
     except Exception as e:
         print(f"EXIF GPS Fehler: {e}")
@@ -214,7 +214,7 @@ def get_gps_from_video(path):
     )
 
     if not lat_match or not lon_match:
-        return None
+        return None, None
 
     lat = dms_to_decimal(lat_match.groups()[:3], lat_match.group(4))
     lon = dms_to_decimal(lon_match.groups()[:3], lon_match.group(4))
@@ -262,6 +262,8 @@ def read_address_from_api_response(data):
         else:
             if address.road:
                 address.name = f"{address.road} {address.houseNumber}".strip() if address.houseNumber else address.road
+        if address.name is None:
+            address.name = f"{address.city}" if address.city else ""
         address.name += f" {address.city}" if address.city else ""
         return address
     
@@ -284,6 +286,7 @@ def get_keywords_for_image_file(file_path) -> tuple[str, list[str]]:
 
     except Exception as e:
         print(f"Error during AI analysis of {file_path.name}: {e}")
+        return "", []
 
 def translate_keywords_to_german(keywords: list[str]) -> list[str]:
     if not keywords:
@@ -351,6 +354,7 @@ def analyze_file(file_path: Path) -> FileInfo:
         file_info.date = date
 
         # Get GPS from EXIF
+        lat, lon = None, None
         if file_path.suffix.lower() in [".jpg"]:
             lat, lon = get_exif_gps(file_path)
         elif file_path.suffix.lower() in [".mp4"]:
@@ -399,7 +403,9 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
 
     last_info = file_infos[-1]
 
-    # New folder if month or year changed
+    assert last_info.date is not None  # Date is guaranteed to be set for all non-skipped files
+    assert current_info.date is not None  # Date is guaranteed to be set for all non
+
     if last_info.date.year != current_info.date.year or last_info.date.month != current_info.date.month:
         #print("Start new folder. Year/month changed, last: {last_info.date}, current: {current_info.date}.")
         return True
@@ -455,6 +461,18 @@ def sanitize_folder_info(folder_info):
     if folder_info.keywordsGerman:
         folder_info.keywordsGerman = [sanitize_for_folder_name(k) for k in folder_info.keywordsGerman]
 
+def create_folder_name(folder_info):
+    assert folder_info.end_date is not None  # Folder end_date will not be None at this point 
+    folder_name: str = f"{folder_info.start_date.strftime('%Y-%m-%dT%H%M')}"
+    folder_name += f"{' - ' + folder_info.end_date.strftime('%dT%H%M') if folder_info.end_date.day != folder_info.start_date.day else ''}"
+    folder_name += f"{' ' + folder_info.place if folder_info.place is not None else ''}"
+    folder_name += f"{' ' + ' '.join(folder_info.keywordsGerman) if folder_info.keywordsGerman else ''}"
+
+    folder_info.path = output_dir 
+    folder_info.path /= str(folder_info.start_date.year)
+    folder_info.path /= MONTH_NAMES[folder_info.start_date.month - 1]
+    folder_info.path /= folder_name
+
 def finish_last_folder_info(folder_infos: list[FolderInfo], file_infos: list[FileInfo]) -> bool:
     if len(folder_infos) == 0 or len(file_infos) == 0:
         return False
@@ -482,21 +500,10 @@ def finish_last_folder_info(folder_infos: list[FolderInfo], file_infos: list[Fil
 
     if file_info.keywordsGerman:
         keyword_counter.update(k for k in file_info.keywordsGerman if k)
-    folder_info.keywordsGerman = [k for k, _ in keyword_counter.most_common(7)]
+    folder_info.keywordsGerman = {k for k, _ in keyword_counter.most_common(7)}
 
-    # Sanitize for folder name
     sanitize_folder_info(folder_info)
-
-    # Create folder name and destination path
-    folder_name: str = f"{folder_info.start_date.strftime('%Y-%m-%d %H-%M')}"
-    folder_name += f"{' - ' + folder_info.end_date.strftime('%d') if folder_info.end_date.day != folder_info.start_date.day else ''}"
-    folder_name += f"{' ' + folder_info.place if folder_info.place is not None else ''}"
-    folder_name += f"{' ' + ' '.join(folder_info.keywordsGerman) if folder_info.keywordsGerman else ''}"
-
-    folder_info.path = output_dir 
-    folder_info.path /= str(folder_info.start_date.year)
-    folder_info.path /= MONTH_NAMES[folder_info.start_date.month - 1]
-    folder_info.path /= folder_name
+    create_folder_name(folder_info)
 
     return True
 
@@ -546,6 +553,7 @@ for file_info in files:
     # Create new and finish old folder if file is different enough
     if is_new_folder(file_infos, file_info):
         finish_last_folder_info(folder_infos, file_infos)
+        assert file_info.date is not None  # Date is guaranteed to be set for non-skipped files
         create_folder_info(folder_infos, file_info.date)
             
     file_infos.append(file_info)
@@ -559,6 +567,7 @@ print("\n")
 print("\nCopying files …")
     
 for folder_info in folder_infos:
+    assert folder_info.path is not None  # Path is guaranteed to be set for all folders at this point
     print(f"- {folder_info.path.name} [{len(folder_info.files)}]")
     folder_meta_path = folder_info.path / "metadata"
     folder_meta_path.mkdir(parents=True, exist_ok=True)
