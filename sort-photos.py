@@ -1,6 +1,7 @@
 import subprocess
 from collections import Counter
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, field
+from dataclasses_json import dataclass_json, LetterCase, config
 import shutil
 from os import path
 import re
@@ -26,7 +27,7 @@ CACHE_DIR.mkdir(exist_ok=True)
 
 BLIP_MODEL_PATH = Path("models/blip-image-captioning-base")
 
-# Englische Stopwords für Keywords
+# English Stopwords for keyword generation
 STOPWORDS = {
     "a", "an", "and", "the", "of", "in", "on", "with", "for", "at", "by", "from",
     "to", "up", "down", "over", "under", "again", "further", "then", "once", "here",
@@ -36,6 +37,21 @@ STOPWORDS = {
     "now", "it", "is", "are", "was", "were", "be", "been", "being", "have", "has", 
     "having", "do", "does", "did", "doing", "his", "her", "its", "they", "them", "this", 
     "that"
+}
+
+# German Stopwords for keyword generation
+STOPWORDS_GERMAN = {
+    "ein", "eine", "einer", "eines", "einem", "einen", "und", "der", "die", "das", 
+    "von", "in", "an", "auf", "mit", "für", "bei", "durch", "aus", "zu", "nach", 
+    "vor", "hinter", "über", "unter", "wieder", "weiter", "dann", "einmal", "hier",
+    "dort", "da", "wann", "wo", "warum", "wie", "alle", "jeder", "jede", "jedes", 
+    "beide", "einige", "wenige", "mehr", "meist", "meiste", "andere", "manche", 
+    "solche", "kein", "keine", "nicht", "nur", "eigen", "selbst", "gleich", "so", 
+    "als", "auch", "sehr", "kann", "wird", "werden", "soll", "sollte", "jetzt", 
+    "es", "ist", "sind", "war", "waren", "sein", "gewesen", "haben", "hat", "hatte",
+    "tun", "tut", "tat", "sein", "ihr", "ihre", "sein", "seine", "sie", "ihnen", 
+    "dies", "diese", "dieser", "dieses", "dem", "den", "des", "im", "am", "zum", 
+    "zur", "ins", "vom", "beim", "bei", "über", "unter"
 }
 
 TRANSLATION_CACHE_FILE = Path(CACHE_DIR / "translation_cache.json")
@@ -60,23 +76,21 @@ _translation_cache: dict[str, str] = {}
 
 # Classes
 
+@dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
 class Address:
     name: Optional[str] = None
     amenity: Optional[str] = None
-    houseNumber: Optional[str] = None
+    house_number: Optional[str] = None
     road: Optional[str] = None
     neighbourhood: Optional[str] = None
     suburb: Optional[str] = None
-    cityDistrict: Optional[str] = None
+    city_district: Optional[str] = None
     city: Optional[str] = None
-    Iso31662Lvl4: Optional[str] = None
+    iso31662_lvl4: Optional[str] = None
     postcode: Optional[str] = None
     country: Optional[str] = None
-    countryCode: Optional[str] = None
-
-    def to_dict(self) -> dict:
-        return asdict(self)
+    country_code: Optional[str] = None
 
     @staticmethod
     def from_dict(data: dict) -> "Address":
@@ -85,57 +99,60 @@ class Address:
         return Address(
             name=data.get("name"),
             amenity=data.get("amenity"),
-            houseNumber=data.get("houseNumber"),
+            house_number=data.get("house_number"),
             road=data.get("road"),
             neighbourhood=data.get("neighbourhood"),
             suburb=data.get("suburb"),
-            cityDistrict=data.get("cityDistrict"),
+            city_district=data.get("city_district"),
             city=data.get("city"),
-            Iso31662Lvl4=data.get("Iso31662Lvl4"),
+            iso31662_lvl4=data.get("iso31662_lvl4"),
             postcode=data.get("postcode"),
             country=data.get("country"),
-            countryCode=data.get("countryCode"),
+            country_code=data.get("country_code"),
         )
 
+@dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
 class FileInfo:
-    path: Path
-    date: Optional[datetime]
-    lat: Optional[float]
-    lon: Optional[float]
-    address: Optional[Address]
-    keywords: list[str]
-    keywordsGerman: list[str]
-    caption: str
-    skip: bool = False
+    schema_version: int = 1
 
-    def to_dict(self) -> dict:
-        data = asdict(self)
-        data["path"] = str(self.path)
-        data["date"] = self.date.isoformat() if self.date else None
-        data["address"] = self.address.to_dict() if self.address else None
-        return data
-
-    @staticmethod
-    def from_dict(data: dict) -> "FileInfo":
-        return FileInfo(
-            path=Path(data["path"]),
-            date=datetime.fromisoformat(data["date"]) if data["date"] else None,
-            lat=data.get("lat"),
-            lon=data.get("lon"),
-            address=Address.from_dict(data.get("address") or {}),
-            keywords=data.get("keywords", []),
-            keywordsGerman=data.get("keywordsGerman", []),
-            caption=data.get("caption", ""),
-            skip=data.get("skip", False),
+    path: Path = field(
+        default=Path(""),
+        metadata=config(
+            encoder=str,
+            decoder=Path
         )
+    )
+
+    date: Optional[datetime] = field(
+        default=None,
+        metadata=config(
+            encoder=lambda d: d.isoformat(),
+            decoder=datetime.fromisoformat,
+            mm_field=None
+        )
+    )
+
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+    address: Optional[Address] = None
+
+    keywords: list[str] = field(default_factory=list)
+    keywords_german: list[str] = field(default_factory=list)
+    caption: str = ""
+    caption_german: str = ""
+
+    skip: bool = field(
+        default=False,
+        metadata=config(exclude=lambda _: True)
+    )
 
 @dataclass
 class FolderInfo:
     start_date: datetime
     end_date: Optional[datetime]
     place: Optional[str]
-    keywordsGerman: set[str]
+    keywords_german: set[str]
     files: list[FileInfo]
     path: Optional[Path] = None
 
@@ -261,7 +278,7 @@ def read_address_from_api_response(data):
             address.name = name
         else:
             if address.road:
-                address.name = f"{address.road} {address.houseNumber}".strip() if address.houseNumber else address.road
+                address.name = f"{address.road} {address.house_number}".strip() if address.house_number else address.road
         if address.name is None:
             address.name = f"{address.city}" if address.city else ""
         address.name += f" {address.city}" if address.city else ""
@@ -269,6 +286,17 @@ def read_address_from_api_response(data):
     
     else:
         return None
+
+def get_caption_for_image_file(file_path) -> str:
+    try:
+        img = Image.open(file_path).convert("RGB")
+        inputs = blip_processor(images=img, return_tensors="pt")
+        out = blip_model.generate(**inputs)
+        return blip_processor.decode(out[0], skip_special_tokens=True)                        
+
+    except Exception as e:
+        print(f"Error during AI analysis of {file_path.name}: {e}")
+        return ""
 
 def get_keywords_for_image_file(file_path) -> tuple[str, list[str]]:
     try:
@@ -278,9 +306,7 @@ def get_keywords_for_image_file(file_path) -> tuple[str, list[str]]:
         caption = blip_processor.decode(out[0], skip_special_tokens=True)
                 
         # very simple keyword extraction
-        keywords_full = caption.split()
-        keywords_filtered = [k for k in keywords_full if k.lower() not in STOPWORDS]
-        keywords: list[str] = [k.lower() for k in keywords_filtered ]
+        keywords = get_keywords_from_caption(caption, STOPWORDS)
         
         return caption, keywords
 
@@ -288,37 +314,24 @@ def get_keywords_for_image_file(file_path) -> tuple[str, list[str]]:
         print(f"Error during AI analysis of {file_path.name}: {e}")
         return "", []
 
-def translate_keywords_to_german(keywords: list[str]) -> list[str]:
-    if not keywords:
-        return []
+def get_keywords_from_caption(caption, stopwords) -> list[str]:
+    keywords_full = caption.split()
+    keywords_no_stopwords = [k for k in keywords_full if k.lower() not in stopwords]
+    keywords_unique = list(dict.fromkeys(keywords_no_stopwords)) 
+
+    return keywords_unique
+
+def translate_english_to_german(text: str) -> str:
+    result: str = ""
 
     translator = GoogleTranslator(source="en", target="de")
-    result = []
 
-    for kw in keywords:
-        kw = kw.strip().lower()
-        if not kw:
-            continue
+    try:
+        result = translator.translate(text)
+    except Exception:
+        result = ""
 
-        if kw in _translation_cache:
-            result.append(_translation_cache[kw])
-            continue
-
-        try:
-            de = translator.translate(kw)
-        except Exception:
-            de = kw
-
-        if de:
-            de = de.capitalize()
-
-            _translation_cache[kw] = de
-            save_translation_cache()
-
-            result.append(de)
-
-    # Doppelte entfernen, Reihenfolge behalten
-    return list(dict.fromkeys(result))
+    return result
 
 def analyze_file(file_path: Path) -> FileInfo:
     """Analyze image and return FileInfo"""
@@ -327,7 +340,7 @@ def analyze_file(file_path: Path) -> FileInfo:
     cache_file = CACHE_DIR / (file_path.stem + ".json")
     if cache_file.exists():
         with open(cache_file, "r", encoding="utf-8") as f:
-            return FileInfo.from_dict(json.load(f))
+            return FileInfo.from_json(f.read())
     
     # Create new FileInfo
     file_info = FileInfo(
@@ -337,7 +350,7 @@ def analyze_file(file_path: Path) -> FileInfo:
         lon=None,
         address=None,
         keywords=[],
-        keywordsGerman=[],
+        keywords_german=[],
         caption="",
         skip=False
     )
@@ -370,19 +383,28 @@ def analyze_file(file_path: Path) -> FileInfo:
 
         # BLIP AI analysis for keywords and caption
         if file_path.suffix.lower() in [".jpg"]:
-            caption, keywords = get_keywords_for_image_file(file_path)
+            caption = get_caption_for_image_file(file_path)
+            keywords = get_keywords_from_caption(caption, STOPWORDS)
+            caption_german = translate_english_to_german(caption)
+            keywords_german = get_keywords_from_caption(caption_german, STOPWORDS_GERMAN)
             file_info.caption = caption
+            file_info.caption_german = caption_german
             file_info.keywords = keywords
-            
-            file_info.keywordsGerman = translate_keywords_to_german(keywords)
+            file_info.keywords_german = keywords_german
             
         elif file_path.suffix.lower() in [".mp4"]:
             file_info.keywords.append("Video")
-            file_info.keywordsGerman.append("Video")
+            file_info.keywords_german.append("Video")
 
     # Save to cache
-    with open(cache_file, "w", encoding="utf-8") as f:
-        json.dump(file_info.to_dict(), f, ensure_ascii=False)
+    cache_file.write_text(
+        json.dumps(
+            file_info.to_dict(),
+            indent=2,
+            ensure_ascii=False
+        ),
+        encoding="utf-8"
+    )
 
     return file_info
 
@@ -442,7 +464,7 @@ def create_folder_info(folder_infos: list[FolderInfo], start_date: datetime):
         start_date = start_date,
         end_date=None,
         place=None,
-        keywordsGerman=set(),
+        keywords_german=set(),
         files=[]
     )
     folder_infos.append(folder_info)
@@ -458,15 +480,15 @@ def sanitize_folder_info(folder_info):
     if folder_info.place:
         folder_info.place = sanitize_for_folder_name(folder_info.place)
     
-    if folder_info.keywordsGerman:
-        folder_info.keywordsGerman = [sanitize_for_folder_name(k) for k in folder_info.keywordsGerman]
+    if folder_info.keywords_german:
+        folder_info.keywords_german = [sanitize_for_folder_name(k) for k in folder_info.keywords_german]
 
 def create_folder_name(folder_info):
     assert folder_info.end_date is not None  # Folder end_date will not be None at this point 
     folder_name: str = f"{folder_info.start_date.strftime('%Y-%m-%dT%H%M')}"
     folder_name += f"{' - ' + folder_info.end_date.strftime('%dT%H%M') if folder_info.end_date.day != folder_info.start_date.day else ''}"
     folder_name += f"{' ' + folder_info.place if folder_info.place is not None else ''}"
-    folder_name += f"{' ' + ' '.join(folder_info.keywordsGerman) if folder_info.keywordsGerman else ''}"
+    folder_name += f"{' ' + ' '.join(folder_info.keywords_german) if folder_info.keywords_german else ''}"
 
     folder_info.path = output_dir 
     folder_info.path /= str(folder_info.start_date.year)
@@ -495,12 +517,12 @@ def finish_last_folder_info(folder_infos: list[FolderInfo], file_infos: list[Fil
     # Aggregate keywords (use only top 7 most common)
     keyword_counter = Counter()
     for f in folder_info.files:
-        if f.keywordsGerman:
-            keyword_counter.update(k for k in f.keywordsGerman if k)
+        if f.keywords_german:
+            keyword_counter.update(k for k in f.keywords_german if k)
 
-    if file_info.keywordsGerman:
-        keyword_counter.update(k for k in file_info.keywordsGerman if k)
-    folder_info.keywordsGerman = {k for k, _ in keyword_counter.most_common(7)}
+    if file_info.keywords_german:
+        keyword_counter.update(k for k in file_info.keywords_german if k)
+    folder_info.keywords_german = {k for k, _ in keyword_counter.most_common(7)}
 
     sanitize_folder_info(folder_info)
     create_folder_name(folder_info)

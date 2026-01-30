@@ -67,7 +67,7 @@ Download and install ExifTool for video metadata extraction:
 Install required Python packages:
 
 ```bash
-pip install pillow piexif geopy transformers torch deep-translator requests
+pip install pillow piexif geopy transformers torch deep-translator requests dataclasses-json
 ```
 
 Or using a requirements.txt file:
@@ -80,6 +80,7 @@ transformers>=4.30.0
 torch>=2.0.0
 deep-translator>=1.11.0
 requests>=2.31.0
+dataclasses-json>=0.6.7
 ```
 
 Then install with:
@@ -204,8 +205,6 @@ You can modify constants in [sort-photos.py](sort-photos.py) to customize behavi
 ### Caching
 
 The script caches analysis results in `.cache/` to speed up repeated runs. Delete this folder to force re-analysis of all photos.
-
-A translation cache is maintained in `.cache/translation_cache.json` to avoid redundant API calls.
 
 ### Notes
 
