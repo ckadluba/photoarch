@@ -51,7 +51,7 @@ STOPWORDS_GERMAN = {
     "es", "ist", "sind", "war", "waren", "sein", "gewesen", "haben", "hat", "hatte",
     "tun", "tut", "tat", "sein", "ihr", "ihre", "sein", "seine", "sie", "ihnen", 
     "dies", "diese", "dieser", "dieses", "dem", "den", "des", "im", "am", "zum", 
-    "zur", "ins", "vom", "beim", "bei", "über", "unter"
+    "zur", "ins", "vom", "beim", "bei", "über", "unter", "um"
 }
 
 TRANSLATION_CACHE_FILE = Path(CACHE_DIR / "translation_cache.json")
