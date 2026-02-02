@@ -1,9 +1,10 @@
 import subprocess
 from collections import Counter
 from dataclasses import dataclass, field
+
+import requests
 from dataclasses_json import dataclass_json, LetterCase, config
 import shutil
-from os import path
 import re
 import json
 from pathlib import Path
@@ -14,8 +15,8 @@ from PIL import Image
 from deep_translator import GoogleTranslator
 import piexif
 from geopy.distance import geodesic
-from transformers import BlipProcessor, BlipForConditionalGeneration
-import requests
+import torch
+from transformers import Blip2Processor, Blip2ForConditionalGeneration
 
 
 # Constants and configuration
@@ -25,7 +26,9 @@ OUTPUT_DIR = Path("sorted_photos")
 CACHE_DIR = Path(".cache")
 CACHE_DIR.mkdir(exist_ok=True)
 
-BLIP_MODEL_PATH = Path("models/blip-image-captioning-base")
+# Model paths
+MODEL_NAME = "Salesforce/blip2-flan-t5-xl"
+MODEL_CACHE_DIR = "./models"
 
 # English Stopwords for keyword generation
 STOPWORDS = {
@@ -54,14 +57,11 @@ STOPWORDS_GERMAN = {
     "zur", "ins", "vom", "beim", "bei", "über", "unter", "um"
 }
 
-TRANSLATION_CACHE_FILE = Path(CACHE_DIR / "translation_cache.json")
-
 # OpenStreetMap Nominatim URL
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse"
 
 FOLDER_MAX_DISTANCE_METERS = 1000  # Maximum distance in meters to consider photos in the same folder
 FOLDER_MAX_TIME_DIFFERENCE_HOURS = 3  # Maximum time difference in hours to consider photos in the same folder
-
 FOLDER_FORBIDDEN_CHARS = r'[:/\\\"\'<>&|,;]'
 
 # Month names for folder naming
@@ -70,8 +70,18 @@ MONTH_NAMES = [
     "07 Jul", "08 Aug", "09 Sep", "10 Oct", "11 Nov", "12 Dec"
 ]
 
-# In-Memory translation cache
-_translation_cache: dict[str, str] = {}
+print("Loading BLIP-2 Model (CPU) …")
+_blip_processor = Blip2Processor.from_pretrained(
+    MODEL_NAME,
+    cache_dir=MODEL_CACHE_DIR
+)
+
+_blip_model = Blip2ForConditionalGeneration.from_pretrained(
+    MODEL_NAME,
+    cache_dir=MODEL_CACHE_DIR,
+    torch_dtype=torch.float32
+)
+_blip_model.eval()
 
 
 # Classes
@@ -290,29 +300,20 @@ def read_address_from_api_response(data):
 def get_caption_for_image_file(file_path) -> str:
     try:
         img = Image.open(file_path).convert("RGB")
-        inputs = blip_processor(images=img, return_tensors="pt")
-        out = blip_model.generate(**inputs)
-        return blip_processor.decode(out[0], skip_special_tokens=True)                        
+
+        inputs = _blip_processor(images=img, return_tensors="pt")
+        with torch.no_grad():
+            output = _blip_model.generate(
+                **inputs,
+                max_new_tokens=50,
+                num_beams=3
+            )
+        return _blip_processor.decode(output[0], skip_special_tokens=True)
 
     except Exception as e:
         print(f"Error during AI analysis of {file_path.name}: {e}")
         return ""
 
-def get_keywords_for_image_file(file_path) -> tuple[str, list[str]]:
-    try:
-        img = Image.open(file_path).convert("RGB")
-        inputs = blip_processor(images=img, return_tensors="pt")
-        out = blip_model.generate(**inputs)
-        caption = blip_processor.decode(out[0], skip_special_tokens=True)
-                
-        # very simple keyword extraction
-        keywords = get_keywords_from_caption(caption, STOPWORDS)
-        
-        return caption, keywords
-
-    except Exception as e:
-        print(f"Error during AI analysis of {file_path.name}: {e}")
-        return "", []
 
 def get_keywords_from_caption(caption, stopwords) -> list[str]:
     keywords_full = caption.split()
@@ -339,6 +340,7 @@ def analyze_file(file_path: Path) -> FileInfo:
     # Use cache entry if available
     cache_file = CACHE_DIR / (file_path.stem + ".json")
     if cache_file.exists():
+        print(f"Using cached {cache_file.name}.")
         with open(cache_file, "r", encoding="utf-8") as f:
             return FileInfo.from_json(f.read())
     
@@ -420,7 +422,6 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
           3.4 All keywords are different"""
 
     if file_infos is None or len(file_infos) == 0:
-        #print("Start new folder. First image.")
         return True 
 
     last_info = file_infos[-1]
@@ -429,7 +430,6 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
     assert current_info.date is not None  # Date is guaranteed to be set for all non
 
     if last_info.date.year != current_info.date.year or last_info.date.month != current_info.date.month:
-        #print("Start new folder. Year/month changed, last: {last_info.date}, current: {current_info.date}.")
         return True
 
     # Check GPS distance
@@ -438,14 +438,12 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
     current_geo = (current_info.lat, current_info.lon)
     distance = geodesic(last_geo, current_geo).meters
     if distance > FOLDER_MAX_DISTANCE_METERS:  # mehr als 1000 Meter
-        #print(f"Start new folder. Distance changed, last_geo: {last_geo}, current_geo: {current_geo}, distance: {distance}.")
         gps_distance = True
         
     # Check time difference
     time_diff = False
     time_delta = abs((current_info.date - last_info.date).total_seconds()) / 3600
     if time_delta > FOLDER_MAX_TIME_DIFFERENCE_HOURS:
-        #print(f"Start new folder. Time difference more than {FOLDER_MAX_TIME_DIFFERENCE_HOURS} hours, last: {last_info.date}, current: {current_info.date}, diff sec: {time_diff}.")
         time_diff = True
 
     # Check if keywords differ significantly (simple check)
@@ -453,7 +451,6 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
     last_keywords = set(last_info.keywords)
     current_keywords = set(current_info.keywords)
     if last_keywords.isdisjoint(current_keywords):
-        #print(f"Start new folder. Keywords differ significantly, last={last_keywords}, current={current_keywords}")
         keyword_difference = True
 
     # Return true to start new folder if at least two criteria differ
@@ -483,7 +480,7 @@ def sanitize_folder_info(folder_info):
     if folder_info.keywords_german:
         folder_info.keywords_german = [sanitize_for_folder_name(k) for k in folder_info.keywords_german]
 
-def create_folder_name(folder_info):
+def create_folder_name(folder_info, output_dir: Path):
     assert folder_info.end_date is not None  # Folder end_date will not be None at this point 
     folder_name: str = f"{folder_info.start_date.strftime('%Y-%m-%dT%H%M')}"
     folder_name += f"{' - ' + folder_info.end_date.strftime('%dT%H%M') if folder_info.end_date.day != folder_info.start_date.day else ''}"
@@ -495,7 +492,7 @@ def create_folder_name(folder_info):
     folder_info.path /= MONTH_NAMES[folder_info.start_date.month - 1]
     folder_info.path /= folder_name
 
-def finish_last_folder_info(folder_infos: list[FolderInfo], file_infos: list[FileInfo]) -> bool:
+def finish_last_folder_info(folder_infos: list[FolderInfo], file_infos: list[FileInfo], output_dir: Path) -> bool:
     if len(folder_infos) == 0 or len(file_infos) == 0:
         return False
     
@@ -525,78 +522,63 @@ def finish_last_folder_info(folder_infos: list[FolderInfo], file_infos: list[Fil
     folder_info.keywords_german = {k for k, _ in keyword_counter.most_common(7)}
 
     sanitize_folder_info(folder_info)
-    create_folder_name(folder_info)
+    create_folder_name(folder_info, output_dir)
 
     return True
-
-def load_translation_cache(TRANSLATION_CACHE_FILE, _translation_cache):
-    print("Load language translation cache …")
-    if TRANSLATION_CACHE_FILE.exists():
-        _translation_cache.update(json.loads(TRANSLATION_CACHE_FILE.read_text(encoding="utf-8")))
-
-def save_translation_cache():
-    TRANSLATION_CACHE_FILE.write_text(
-        json.dumps(_translation_cache, ensure_ascii=False, indent=2),
-        encoding="utf-8"
-    )
 
 
 # Begin of main script
 
-# Parse command line arguments
-parser = argparse.ArgumentParser(description="Sort and organize photos by date, location, and AI-generated content.")
-parser.add_argument("--input", type=str, default=str(INPUT_DIR), help=f"Input directory containing photos (default: {INPUT_DIR})")
-parser.add_argument("--output", type=str, default=str(OUTPUT_DIR), help=f"Output directory for sorted photos (default: {OUTPUT_DIR})")
-args = parser.parse_args()
+def main(input_dir: str, output_dir: str):
+    input_path = Path(input_dir)
+    output_path = Path(output_dir)
 
-input_dir = Path(args.input)
-output_dir = Path(args.output)
+    print("\n")
+    print("Analyzing files …")
+    files = sorted(input_path.iterdir(), key=lambda f: f.name)
 
-# Load BLIP models
-print("Load BLIP image AI model …")
-blip_processor = BlipProcessor.from_pretrained(BLIP_MODEL_PATH)
-blip_model = BlipForConditionalGeneration.from_pretrained(BLIP_MODEL_PATH)
+    file_infos: list[FileInfo] = []
+    folder_infos: list[FolderInfo] = []
+    for file_info in files:
+        
+        # Analyze file
+        file_info = analyze_file(file_info)
+        if file_info.skip:
+            continue # Skip files that did not match criteria
+        
+        # Create new and finish old folder if file is different enough
+        if is_new_folder(file_infos, file_info):
+            finish_last_folder_info(folder_infos, file_infos, output_path)
+            assert file_info.date is not None  # Date is guaranteed to be set for non-skipped files
+            create_folder_info(folder_infos, file_info.date)
+                
+        file_infos.append(file_info)
+        folder_infos[-1].files.append(file_info)
+        
+    # Finish last folder
+    finish_last_folder_info(folder_infos, file_infos, output_path)
 
-load_translation_cache(TRANSLATION_CACHE_FILE, _translation_cache)
+    print("\n")
+    print("\nCopying files …")
+        
+    for folder_info in folder_infos:
+        assert folder_info.path is not None  # Path is guaranteed to be set for all folders at this point
+        print(f"- {folder_info.path.name} [{len(folder_info.files)}]")
+        folder_meta_path = folder_info.path / "metadata"
+        folder_meta_path.mkdir(parents=True, exist_ok=True)
+        for file_info in folder_info.files:
+            print(f"   - {file_info.path}")
+            shutil.copy(input_path / file_info.path, folder_info.path / file_info.path)
+            file_meta_name = file_info.path.stem + ".json"
+            shutil.copy(CACHE_DIR / file_meta_name, folder_meta_path / file_meta_name)
 
-print("\n")
-print("Analyzing files …")
-files = sorted(input_dir.iterdir(), key=lambda f: f.name)
+    print("Finished.")
 
-file_infos: list[FileInfo] = []
-folder_infos: list[FolderInfo] = []
-for file_info in files:
-    
-    # Analyze file
-    file_info = analyze_file(file_info)
-    if file_info.skip:
-        continue # Skip files that did not match criteria
-    
-    # Create new and finish old folder if file is different enough
-    if is_new_folder(file_infos, file_info):
-        finish_last_folder_info(folder_infos, file_infos)
-        assert file_info.date is not None  # Date is guaranteed to be set for non-skipped files
-        create_folder_info(folder_infos, file_info.date)
-            
-    file_infos.append(file_info)
-    folder_infos[-1].files.append(file_info)
-    
-# Finish last folder
-finish_last_folder_info(folder_infos, file_infos)
+if __name__ == "__main__":
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Sort and organize photos by date, location, and AI-generated content.")
+    parser.add_argument("--input", type=str, default=str(INPUT_DIR), help=f"Input directory containing photos (default: {INPUT_DIR})")
+    parser.add_argument("--output", type=str, default=str(OUTPUT_DIR), help=f"Output directory for sorted photos (default: {OUTPUT_DIR})")
+    args = parser.parse_args()
 
-    
-print("\n")
-print("\nCopying files …")
-    
-for folder_info in folder_infos:
-    assert folder_info.path is not None  # Path is guaranteed to be set for all folders at this point
-    print(f"- {folder_info.path.name} [{len(folder_info.files)}]")
-    folder_meta_path = folder_info.path / "metadata"
-    folder_meta_path.mkdir(parents=True, exist_ok=True)
-    for file_info in folder_info.files:
-        print(f"   - {file_info.path}")
-        shutil.copy(input_dir / file_info.path, folder_info.path / file_info.path)
-        file_meta_name = file_info.path.stem + ".json"
-        shutil.copy(CACHE_DIR / file_meta_name, folder_meta_path / file_meta_name)
-
-print("Finished.")
+    main(args.input, args.output)

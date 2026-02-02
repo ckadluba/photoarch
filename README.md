@@ -6,7 +6,7 @@ This Python script automatically organizes and archives photos and videos taken 
 
 ### Key Features
 
-- **AI-Powered Content Analysis**: Uses the BLIP (Bootstrapping Language-Image Pre-training) model to generate captions and keywords for images used locally without cloud access
+- **AI-Powered Content Analysis**: Uses the BLIP-2 (Bootstrapping Language-Image Pre-training) model to generate captions and keywords for images used locally without cloud access. AI processing happens offline. The model is automatically downloaded on first execution of the script.
 - **Geolocation Processing**: Extracts GPS coordinates from EXIF data and performs reverse geocoding to determine locations
 - **Intelligent Grouping**: Automatically groups photos into folders based on:
   - Temporal proximity (time between photos)
@@ -32,29 +32,7 @@ The authors and contributors accept **NO RESPONSIBILITY** for:
 
 ## Prerequisites
 
-### 1. BLIP Model
-
-Download the BLIP image captioning model from Hugging Face:
-
-- Model: [Salesforce/blip-image-captioning-base](https://huggingface.co/Salesforce/blip-image-captioning-base)
-- Place the model files in: `models/blip-image-captioning-base/`
-
-You can download the model using:
-
-```bash
-# Using git-lfs (recommended)
-git lfs install
-git clone https://huggingface.co/Salesforce/blip-image-captioning-base models/blip-image-captioning-base
-
-# Or download via Python
-from transformers import BlipProcessor, BlipForConditionalGeneration
-processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
-model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
-processor.save_pretrained("models/blip-image-captioning-base")
-model.save_pretrained("models/blip-image-captioning-base")
-```
-
-### 2. ExifTool
+### 1. ExifTool
 
 Download and install ExifTool for video metadata extraction:
 
@@ -62,41 +40,21 @@ Download and install ExifTool for video metadata extraction:
 - Windows: Place `exiftool.exe` in the project root directory or add to PATH
 - Linux/Mac: Install via package manager (e.g., `apt install exiftool` or `brew install exiftool`)
 
-### 3. Python Dependencies
+### 2. Python Dependencies
 
 Install required Python packages:
-
-```bash
-pip install pillow piexif geopy transformers torch deep-translator requests dataclasses-json
-```
-
-Or using a requirements.txt file:
-
-```txt
-pillow>=10.0.0
-piexif>=1.1.3
-geopy>=2.4.0
-transformers>=4.30.0
-torch>=2.0.0
-deep-translator>=1.11.0
-requests>=2.31.0
-dataclasses-json>=0.6.7
-```
-
-Then install with:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Directory Structure
+### 3. Directory Structure
 
 Ensure the following directories exist (they will be created automatically if missing):
 
-- `input_photos/` - Place your photos here
+- `input_photos/` - Place your photos here (or specify alternative path using `--input` command line parameter)
 - `sorted_photos/` - Output directory (will be created)
 - `.cache/` - Temporary cache for analysis results
-- `models/blip-image-captioning-base/` - BLIP model files
 
 ## Usage
 
@@ -168,8 +126,9 @@ Each photo has an accompanying JSON metadata file containing:
     "countryCode": "de"
   },
   "keywords": ["gate", "landmark", "building", "sky"],
-  "keywordsGerman": ["Tor", "Sehenswürdigkeit", "Gebäude", "Himmel"],
+  "keywordsGerman": ["Tor", "Sehenswürdigkeit", "Gittertäben", "Himmel"],
   "caption": "a large gate with columns and a sky background",
+  "captionGerman": "ein großes Tor mit Gittertäben und Himmel",
   "skip": false
 }
 ```
@@ -180,7 +139,7 @@ Each photo has an accompanying JSON metadata file containing:
    - Timestamp (from filename)
    - GPS coordinates (from EXIF data)
    - Location name (reverse geocoding via OpenStreetMap)
-   - Content keywords (AI-generated via BLIP model)
+   - Content keywords (AI-generated via offline BLIP-2 model)
 
 2. **Folder Grouping**: Photos are grouped into folders based on:
    - Same month/year
@@ -200,6 +159,7 @@ You can modify constants in [sort-photos.py](sort-photos.py) to customize behavi
 - `FOLDER_MAX_DISTANCE_METERS` - Maximum distance for same folder (default: 1000m)
 - `FOLDER_MAX_TIME_DIFFERENCE_HOURS` - Maximum time gap for same folder (default: 3 hours)
 - `STOPWORDS` - English stopwords to filter from keywords
+- `STOPWORDS_GERMAN` - German stopwords to filter from keywords
 - `FOLDER_FORBIDDEN_CHARS` - Characters to remove from folder names
 
 ### Caching
@@ -212,8 +172,10 @@ The script caches analysis results in `.cache/` to speed up repeated runs. Delet
 - Only `.jpg` images and `.mp4` videos are processed
 - Reverse geocoding uses OpenStreetMap Nominatim API (rate-limited)
 - Keyword translation uses Google Translate API (may be rate-limited)
+- AI analysis of the image happens offline with a downloaded BLIP-2 model
 - Original files are **copied**, not moved (originals remain in input directory)
 
 ## License
 
 Apache License 2.0 - See LICENSE file for details
+Christian Kadluba 2026
