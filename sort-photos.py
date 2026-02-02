@@ -21,8 +21,8 @@ from transformers import Blip2Processor, Blip2ForConditionalGeneration
 
 # Constants and configuration
 
-INPUT_DIR = Path("input_photos")
-OUTPUT_DIR = Path("sorted_photos")
+INPUT_DIR = Path("./input_photos")
+OUTPUT_DIR = Path("./sorted_photos")
 CACHE_DIR = Path(".cache")
 CACHE_DIR.mkdir(exist_ok=True)
 
@@ -568,9 +568,13 @@ def main(input_dir: str, output_dir: str):
         folder_meta_path.mkdir(parents=True, exist_ok=True)
         for file_info in folder_info.files:
             print(f"   - {file_info.path}")
-            shutil.copy(input_path / file_info.path, folder_info.path / file_info.path)
+            photo_file_src_path = input_path / file_info.path
+            photo_file_dst_path = folder_info.path / file_info.path
+            shutil.copy(photo_file_src_path, photo_file_dst_path)
             file_meta_name = file_info.path.stem + ".json"
-            shutil.copy(CACHE_DIR / file_meta_name, folder_meta_path / file_meta_name)
+            meta_file_src_path = CACHE_DIR / file_meta_name
+            meta_file_dst_path = folder_meta_path / file_meta_name
+            shutil.copy(meta_file_src_path, meta_file_dst_path)
 
     print("Finished.")
 
