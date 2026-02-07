@@ -73,7 +73,8 @@ MONTH_NAMES = [
 print("Loading BLIP-2 Model (CPU) …")
 _blip_processor = Blip2Processor.from_pretrained(
     MODEL_NAME,
-    cache_dir=MODEL_CACHE_DIR
+    cache_dir=MODEL_CACHE_DIR,
+    use_fast=True
 )
 
 _blip_model = Blip2ForConditionalGeneration.from_pretrained(
