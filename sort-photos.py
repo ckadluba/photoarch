@@ -79,7 +79,7 @@ _blip_processor = Blip2Processor.from_pretrained(
 _blip_model = Blip2ForConditionalGeneration.from_pretrained(
     MODEL_NAME,
     cache_dir=MODEL_CACHE_DIR,
-    torch_dtype=torch.float32
+    dtype=torch.float32
 )
 _blip_model.eval()
 
