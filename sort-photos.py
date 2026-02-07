@@ -261,7 +261,8 @@ def get_address_from_coords(lat, lon) -> Address | None:
                 "lon": lon,
                 "format": "jsonv2",
                 "zoom": 18,            # hohe Detailstufe
-                "addressdetails": 1
+                "addressdetails": 1,
+                "accept-language": "de,en"                
             },
             headers={
                 "User-Agent": "photoarch/1.0 (contact: geoquest@gmail.com)"
