@@ -13,7 +13,6 @@ from typing import Optional
 import argparse
 from PIL import Image
 from deep_translator import GoogleTranslator
-import piexif
 from geopy.distance import geodesic
 import torch
 from transformers import Blip2Processor, Blip2ForConditionalGeneration
@@ -170,7 +169,7 @@ class FolderInfo:
 
 # Helpers
 
-def get_file_datetime(path: Path):
+def get_file_datetime(path: Path) -> datetime | None:
     """Get timestamp from filename or None if name does not match criteria"""
     match = re.match(r"PXL_(\d{8})_(\d{6})\d{0,3}", path.name)
     if match is None:
@@ -179,66 +178,33 @@ def get_file_datetime(path: Path):
         date, time = match.groups()
         return datetime.strptime(date + time, "%Y%m%d%H%M%S")
 
-def get_exif_gps(img_path):
-    """Read GPS coordinates from image EXIF data using piexif"""
-    try:
-        img = Image.open(img_path)
-        if "exif" not in img.info:
-            return None, None
-        exif_dict = piexif.load(img.info["exif"])
-        gps_ifd = exif_dict.get("GPS", {})
-
-        if not gps_ifd:
-            return None, None
-
-        def rational_to_deg(r):
-            # piexif speichert als ((num, den), (num, den), (num, den))
-            if isinstance(r, (list, tuple)) and len(r) == 3:
-                deg = r[0][0]/r[0][1] + r[1][0]/r[1][1]/60 + r[2][0]/r[2][1]/3600
-                return deg
-            return None
-
-        lat_ref = gps_ifd.get(piexif.GPSIFD.GPSLatitudeRef, b'N').decode()
-        lon_ref = gps_ifd.get(piexif.GPSIFD.GPSLongitudeRef, b'E').decode()
-        lat = gps_ifd.get(piexif.GPSIFD.GPSLatitude)
-        lon = gps_ifd.get(piexif.GPSIFD.GPSLongitude)
-
-        if lat and lon:
-            lat = rational_to_deg(lat)
-            lon = rational_to_deg(lon)
-            if lat is not None and lon is not None:
-                if lat_ref == 'S':
-                    lat = -lat
-                if lon_ref == 'W':
-                    lon = -lon
-                return lat, lon
-        return None, None
-    except Exception as e:
-        print(f"EXIF GPS Fehler: {e}")
-        return None, None
-
-def dms_to_decimal(dms, direction):
-    degrees, minutes, seconds = map(float, dms)
-    decimal = degrees + minutes / 60 + seconds / 3600
-    if direction in ["S", "W"]:
-        decimal *= -1
-    return decimal
-
-def get_gps_from_video(path):
+def get_exif_data_from_file(path: Path) -> str | None:
     result = subprocess.run(
         ["exiftool", path],
         stdout=subprocess.PIPE,
         text=True
-    ).stdout
+    )
+    return result.stdout if result.returncode == 0 else None
+
+def get_date_from_exif_data(exif_data: str) -> datetime | None:
+    """Extract date/time from EXIF data string"""
+    match = re.search(r"Date/Time Original\s*:\s*(\d{4}:\d{2}:\d{2} \d{2}:\d{2}:\d{2})", exif_data)
+    if match is None:
+        return None
+    else:
+        exif_date_str = match.group(1)
+        return datetime.strptime(exif_date_str, "%Y:%m:%d %H:%M:%S")
+
+def get_gps_from_exif_data(exif_data: str) -> tuple[Optional[float], Optional[float]]:
 
     lat_match = re.search(
         r"GPS Latitude\s*:\s*(\d+)\s*deg\s*(\d+)'[\s]*(\d+\.?\d*)\"\s*([NS])",
-        result
+        exif_data
     )
 
     lon_match = re.search(
         r"GPS Longitude\s*:\s*(\d+)\s*deg\s*(\d+)'[\s]*(\d+\.?\d*)\"\s*([EW])",
-        result
+        exif_data
     )
 
     if not lat_match or not lon_match:
@@ -248,6 +214,13 @@ def get_gps_from_video(path):
     lon = dms_to_decimal(lon_match.groups()[:3], lon_match.group(4))
 
     return lat, lon
+
+def dms_to_decimal(dms, direction) -> float:
+    degrees, minutes, seconds = map(float, dms)
+    decimal = degrees + minutes / 60 + seconds / 3600
+    if direction in ["S", "W"]:
+        decimal *= -1
+    return decimal
 
 def get_address_from_coords(lat, lon) -> Address | None:
     """Reverse Geocoding via OSM Nominatim"""
@@ -370,12 +343,20 @@ def analyze_file(file_path: Path) -> FileInfo:
         
         file_info.date = date
 
-        # Get GPS from EXIF
+        exif_data = get_exif_data_from_file(file_path)
+        if exif_data is None:
+            print(f"Could not read EXIF data from {file_path.name}.")
+
+        # Get date and time from EXIF if available (overrides filename date)
+        date_time = get_date_from_exif_data(exif_data) if exif_data else None
+        if date_time is None:
+            print(f"Could not read date from EXIF data of {file_path.name}. Using filename date.")
+        else:
+            file_info.date = date_time
+        
+        # Get GPS from EXIF data
         lat, lon = None, None
-        if file_path.suffix.lower() in [".jpg"]:
-            lat, lon = get_exif_gps(file_path)
-        elif file_path.suffix.lower() in [".mp4"]:
-            lat, lon = get_gps_from_video(file_path)
+        lat, lon = get_gps_from_exif_data(exif_data) if exif_data else (None, None)
         if lat is None or lon is None:
             print(f"Could not read GPS data from {file_path.name}.")
         file_info.lat = lat
@@ -383,6 +364,8 @@ def analyze_file(file_path: Path) -> FileInfo:
         
         # Get address from coordinates
         address = get_address_from_coords(file_info.lat, file_info.lon)
+        if address is None:
+            print(f"Could not read address from {file_path.name}.")
         file_info.address = address
 
         # BLIP AI analysis for keywords and caption
@@ -418,10 +401,9 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
        1. Always start a new folder if no previous files exist
        2. Start new folder if month or year changed
        3. Start a new folder if at least two of the following criteria differ:
-          3.1 GPS distance > threshold
-          3.2 POI changed if available
-          3.3 time difference > threshold
-          3.4 All keywords are different"""
+          3.1 GPS distance > FOLDER_MAX_DISTANCE_METERS
+          3.2 time difference > FOLDER_MAX_TIME_DIFFERENCE_HOURS
+          3.3 All keywords are different"""
 
     if file_infos is None or len(file_infos) == 0:
         return True 

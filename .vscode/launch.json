@@ -6,10 +6,10 @@
     "configurations": [
 
         {
-            "name": "Python Debugger: sort-photos.py",
+            "name": "Python Debugger: photoarch.py",
             "type": "debugpy",
             "request": "launch",
-            "program": "./sort-photos.py",
+            "program": "./photoarch.py",
             "console": "integratedTerminal"
         }
     ]

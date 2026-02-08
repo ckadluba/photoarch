@@ -63,7 +63,7 @@ Ensure the following directories exist (they will be created automatically if mi
 Place your photos in the `input_photos/` directory and run:
 
 ```bash
-python sort-photos.py
+python photoarch.py
 ```
 
 ### Custom Input/Output Directories
@@ -71,7 +71,7 @@ python sort-photos.py
 Specify custom input and output directories:
 
 ```bash
-python sort-photos.py --input /path/to/photos --output /path/to/sorted
+python photoarch.py --input /path/to/photos --output /path/to/sorted
 ```
 
 ### Command-Line Arguments
@@ -154,7 +154,7 @@ Each photo has an accompanying JSON metadata file containing:
 
 ### Configuration
 
-You can modify constants in [sort-photos.py](sort-photos.py) to customize behavior:
+You can modify constants in [photoarch.py](photoarch.py) to customize behavior:
 
 - `FOLDER_MAX_DISTANCE_METERS` - Maximum distance for same folder (default: 1000m)
 - `FOLDER_MAX_TIME_DIFFERENCE_HOURS` - Maximum time gap for same folder (default: 3 hours)
