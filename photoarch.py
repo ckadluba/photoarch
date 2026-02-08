@@ -144,10 +144,10 @@ def get_exif_data_from_file(path: Path) -> str | None:
 
 def get_date_from_exif_data(exif_data: str) -> datetime | None:
     """Extract date/time from EXIF data string"""
-    match_date_time_original = re.search(r"Date/Time Original\s*:\s*(\d{4}:\d{2}:\d{2} \d{2}:\d{2}:\d{2})", exif_data)
+    match_date_time_original = re.search(r"Date/Time Original\s*:\s*(\d{4}:\d{2}:\d{2} \d{2}:\d{2}:\d{2}\.\d{3}\+\d{2}:\d{2})", exif_data)
     if match_date_time_original:
         date_str = match_date_time_original.group(1)
-        return datetime.strptime(date_str, "%Y:%m:%d %H:%M:%S")
+        return datetime.strptime(date_str, "%Y:%m:%d %H:%M:%S.%f%z")
 
     match_file_modification_date_time = re.search(r"File Modification Date/Time\s*:\s*(\d{4}:\d{2}:\d{2} \d{2}:\d{2}:\d{2}\+\d{2}:\d{2})", exif_data)
     if match_file_modification_date_time:
