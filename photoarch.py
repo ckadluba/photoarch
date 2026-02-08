@@ -1,7 +1,6 @@
 import subprocess
 from collections import Counter
 from dataclasses import dataclass, field
-
 import requests
 from dataclasses_json import dataclass_json, LetterCase, config
 import shutil
@@ -16,58 +15,15 @@ from deep_translator import GoogleTranslator
 from geopy.distance import geodesic
 import torch
 from transformers import Blip2Processor, Blip2ForConditionalGeneration
+from constants import *
 
 
-# Constants and configuration
+# Initialization
 
-INPUT_DIR = Path("./input_photos")
-OUTPUT_DIR = Path("./sorted_photos")
-CACHE_DIR = Path(".cache")
+INPUT_DIR = Path(INPUT_DIR_STR)
+OUTPUT_DIR = Path(OUTPUT_DIR_STR)
+CACHE_DIR = Path(CACHE_DIR_STR)
 CACHE_DIR.mkdir(exist_ok=True)
-
-# Model paths
-MODEL_NAME = "Salesforce/blip2-flan-t5-xl"
-MODEL_CACHE_DIR = "./models"
-
-# English Stopwords for keyword generation
-STOPWORDS = {
-    "a", "an", "and", "the", "of", "in", "on", "with", "for", "at", "by", "from",
-    "to", "up", "down", "over", "under", "again", "further", "then", "once", "here",
-    "there", "when", "where", "why", "how", "all", "any", "both", "each", "few",
-    "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own",
-    "same", "so", "than", "too", "very", "can", "will", "just", "don", "should",
-    "now", "it", "is", "are", "was", "were", "be", "been", "being", "have", "has", 
-    "having", "do", "does", "did", "doing", "his", "her", "its", "they", "them", "this", 
-    "that"
-}
-
-# German Stopwords for keyword generation
-STOPWORDS_GERMAN = {
-    "ein", "eine", "einer", "eines", "einem", "einen", "und", "der", "die", "das", 
-    "von", "in", "an", "auf", "mit", "für", "bei", "durch", "aus", "zu", "nach", 
-    "vor", "hinter", "über", "unter", "wieder", "weiter", "dann", "einmal", "hier",
-    "dort", "da", "wann", "wo", "warum", "wie", "alle", "jeder", "jede", "jedes", 
-    "beide", "einige", "wenige", "mehr", "meist", "meiste", "andere", "manche", 
-    "solche", "kein", "keine", "nicht", "nur", "eigen", "selbst", "gleich", "so", 
-    "als", "auch", "sehr", "kann", "wird", "werden", "soll", "sollte", "jetzt", 
-    "es", "ist", "sind", "war", "waren", "sein", "gewesen", "haben", "hat", "hatte",
-    "tun", "tut", "tat", "sein", "ihr", "ihre", "sein", "seine", "sie", "ihnen", 
-    "dies", "diese", "dieser", "dieses", "dem", "den", "des", "im", "am", "zum", 
-    "zur", "ins", "vom", "beim", "bei", "über", "unter", "um"
-}
-
-# OpenStreetMap Nominatim URL
-NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse"
-
-FOLDER_MAX_DISTANCE_METERS = 1000  # Maximum distance in meters to consider photos in the same folder
-FOLDER_MAX_TIME_DIFFERENCE_HOURS = 3  # Maximum time difference in hours to consider photos in the same folder
-FOLDER_FORBIDDEN_CHARS = r'[:/\\\"\'<>&|,;]'
-
-# Month names for folder naming
-MONTH_NAMES = [
-    "01 Jan", "02 Feb", "03 Mar", "04 Apr", "05 May", "06 Jun",
-    "07 Jul", "08 Aug", "09 Sep", "10 Oct", "11 Nov", "12 Dec"
-]
 
 print("Loading BLIP-2 Model (CPU) …")
 _blip_processor = Blip2Processor.from_pretrained(
