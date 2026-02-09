@@ -17,7 +17,7 @@ STOPWORDS = {
     "same", "so", "than", "too", "very", "can", "will", "just", "don", "should",
     "now", "it", "is", "are", "was", "were", "be", "been", "being", "have", "has", 
     "having", "do", "does", "did", "doing", "his", "her", "its", "they", "them", "this", 
-    "that"
+    "that", "hers", "ours", "yours", "their", "what", "which", "who", "whom", "whose", "my"
 }
 
 # German Stopwords for keyword generation
@@ -32,7 +32,8 @@ STOPWORDS_GERMAN = {
     "es", "ist", "sind", "war", "waren", "sein", "gewesen", "haben", "hat", "hatte",
     "tun", "tut", "tat", "sein", "ihr", "ihre", "sein", "seine", "sie", "ihnen", 
     "dies", "diese", "dieser", "dieses", "dem", "den", "des", "im", "am", "zum", 
-    "zur", "ins", "vom", "beim", "bei", "über", "unter", "um", "darauf"
+    "zur", "ins", "vom", "beim", "bei", "über", "unter", "um", "darauf", "darin",
+    "ihres", "unser", "unsere", "unserer", "unseres", "euer", "eure", "eurer", "eures"
 }
 
 # OpenStreetMap Nominatim URL
