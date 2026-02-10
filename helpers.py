@@ -97,6 +97,8 @@ class FileInfo:
         )
     )
 
+    camera_model: Optional[str] = None
+
     lat: Optional[float] = None
     lon: Optional[float] = None
     address: Optional[Address] = None
@@ -123,14 +125,14 @@ class FolderInfo:
 
 # Helpers
 
-def get_file_datetime(path: Path) -> datetime | None:
-    """Get timestamp from filename or None if name does not match criteria"""
-    match = re.match(r"PXL_(\d{8})_(\d{6})\d{0,3}", path.name)
-    if match is None:
+def get_file_modified_datetime(path: Path) -> datetime | None:
+    """Get timestamp from file modified date or None if not available"""
+    try:
+        timestamp = path.stat().st_mtime
+        return datetime.fromtimestamp(timestamp)
+    except Exception:
+        print(f"Could not read modified date for {path.name}.")
         return None
-    else:
-        date, time = match.groups()
-        return datetime.strptime(date + time, "%Y%m%d%H%M%S")
 
 def get_exif_data_from_file(path: Path) -> str | None:
     result = subprocess.run(
@@ -152,6 +154,13 @@ def get_date_from_exif_data(exif_data: str) -> datetime | None:
         date_str = match_file_modification_date_time.group(1)
         return datetime.strptime(date_str, "%Y:%m:%d %H:%M:%S%z")
     
+    return None
+
+def get_camera_from_exif_data(exif_data: str) -> str | None:
+    """Extract camera make from EXIF data string"""
+    match_camera_make = re.search(r"Camera Model Name\s*:\s*(.*)", exif_data)
+    if match_camera_make:
+        return match_camera_make.group(1).strip()
     return None
 
 def get_gps_from_exif_data(exif_data: str) -> tuple[Optional[float], Optional[float]]:
@@ -291,15 +300,12 @@ def analyze_file(file_path: Path) -> FileInfo:
         skip=False
     )
     
-    # Get date from filename and validate
-    date = get_file_datetime(file_path)
-    if date is None:
+    # Check filename criteria
+    if file_path.match('*.jpg') is None and file_path.match('*.mp4') is None:
         print(f"Filename does not match criteria {file_path.name}. Will skip.")
         file_info.skip = True
         return file_info
     else:        
-        file_info.date = date
-
         exif_data = get_exif_data_from_file(file_path)
         if exif_data is None:
             print(f"Could not read EXIF data from {file_path.name}.")
@@ -307,10 +313,17 @@ def analyze_file(file_path: Path) -> FileInfo:
         # Get date and time from EXIF if available (overrides filename date)
         date_time = get_date_from_exif_data(exif_data) if exif_data else None
         if date_time is None:
-            print(f"Could not read date from EXIF data of {file_path.name}. Using filename date.")
+            print(f"Could not read date from EXIF data of {file_path.name}. Using file modified date as fallback.")
+            file_info.date = get_file_modified_datetime(file_path)
         else:
             file_info.date = date_time
-        
+
+        # Get camera model from EXIF if available
+        camera_model = get_camera_from_exif_data(exif_data) if exif_data else None
+        if camera_model is None:
+            print(f"Could not read camera model from EXIF data of {file_path.name}.")
+        file_info.camera_model = camera_model
+
         # Get GPS from EXIF data
         lat, lon = None, None
         lat, lon = get_gps_from_exif_data(exif_data) if exif_data else (None, None)

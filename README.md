@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This Python script automatically organizes and archives photos and videos taken with a Google Pixel phone (or similar devices). It processes images from a flat input folder and intelligently sorts them into a structured output directory based on date, location, and content.
+This Python script automatically organizes and archives photos and videos which contain EXIF data including geo coordinates, date and time and other metadata. It processes images from a flat input folder and intelligently sorts them into a structured output directory based on date, location, and content.
 
 ### Key Features
 
@@ -114,6 +114,7 @@ Each photo has an accompanying JSON metadata file containing:
 {
   "path": "PXL_20250115_143052.jpg",
   "date": "2025-01-15T14:30:52",
+  "cameraModel": "Google Pixel 8",
   "lat": 52.516275,
   "lon": 13.377704,
   "address": {
@@ -128,33 +129,32 @@ Each photo has an accompanying JSON metadata file containing:
   "keywords": ["gate", "landmark", "building", "sky"],
   "keywordsGerman": ["Tor", "Sehenswürdigkeit", "Gittertäben", "Himmel"],
   "caption": "a large gate with columns and a sky background",
-  "captionGerman": "ein großes Tor mit Gittertäben und Himmel",
-  "skip": false
+  "captionGerman": "ein großes Tor mit Gittertäben und Himmel"
 }
 ```
 
 ### Processing Flow
 
 1. **File Analysis**: Each photo is analyzed for:
-   - Timestamp (from filename)
+   - Timestamp (from EXIF or file modification date)
    - GPS coordinates (from EXIF data)
    - Location name (reverse geocoding via OpenStreetMap)
    - Content keywords (AI-generated via offline BLIP-2 model)
 
 2. **Folder Grouping**: Photos are grouped into folders based on:
    - Same month/year
-   - Geographic proximity (within 1000m)
-   - Temporal proximity (within 3 hours)
+   - Geographic proximity (within `FOLDER_MAX_DISTANCE_METERS`)
+   - Temporal proximity (within `FOLDER_MAX_TIME_DIFFERENCE_HOURS`)
    - Content similarity (shared keywords)
 
 3. **File Organization**: Photos are copied to the output directory with:
    - Hierarchical folder structure (Year/Month/Event)
-   - Descriptive folder names (Date + Location + Keywords)
+   - Descriptive folder names (Date/Time + Location + Keywords)
    - Metadata JSON files for each photo
 
 ### Configuration
 
-You can modify constants in [photoarch.py](photoarch.py) to customize behavior:
+You can modify constants in [constants.py](constants.py) to customize behavior:
 
 - `FOLDER_MAX_DISTANCE_METERS` - Maximum distance for same folder (default: 1000m)
 - `FOLDER_MAX_TIME_DIFFERENCE_HOURS` - Maximum time gap for same folder (default: 3 hours)
@@ -168,12 +168,14 @@ The script caches analysis results in `.cache/` to speed up repeated runs. Delet
 
 ### Notes
 
-- The script expects Google Pixel phone filename format: `PXL_YYYYMMDD_HHMMSS*.jpg`
 - Only `.jpg` images and `.mp4` videos are processed
 - Reverse geocoding uses OpenStreetMap Nominatim API (rate-limited)
 - Keyword translation uses Google Translate API (may be rate-limited)
 - AI analysis of the image happens offline with a downloaded BLIP-2 model
 - Original files are **copied**, not moved (originals remain in input directory)
+- The script should work with photos and videos from different cameras and phones 
+  as long as they contain EXIF data. Yet it was mainly tested with files made with 
+  Google Pixel 8 and Samsung Galaxy A15 phones.
 
 ## License
 
