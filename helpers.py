@@ -93,8 +93,8 @@ class FileInfo:
     date: Optional[datetime] = field(
         default=None,
         metadata=config(
-            encoder=lambda d: d.isoformat(),
-            decoder=datetime.fromisoformat,
+            encoder=lambda d: d.isoformat() if d else None,
+            decoder=lambda s: datetime.fromisoformat(s) if s else None,
             mm_field=None
         )
     )
@@ -301,57 +301,58 @@ def analyze_file(file_path: Path) -> FileInfo:
     )
     
     # Check filename criteria
-    if file_path.match('*.jpg') is None and file_path.match('*.mp4') is None:
+    if not does_filename_meet_criteria(file_path):
         print(f"Filename does not match criteria {file_path.name}. Will skip.")
         file_info.skip = True
         return file_info
-    else:        
-        exif_data = get_exif_data_from_file(file_path)
-        if exif_data is None:
-            print(f"Could not read EXIF data from {file_path.name}.")
 
-        # Get date and time from EXIF if available (overrides filename date)
-        date_time = get_date_from_exif_data(exif_data) if exif_data else None
-        if date_time is None:
-            print(f"Could not read date from EXIF data of {file_path.name}. Using file modified date as fallback.")
-            file_info.date = get_file_modified_datetime(file_path)
-        else:
-            file_info.date = date_time
+    # Process file
+    exif_data = get_exif_data_from_file(file_path)
+    if exif_data is None:
+        print(f"Could not read EXIF data from {file_path.name}.")
 
-        # Get camera model from EXIF if available
-        camera_model = get_camera_from_exif_data(exif_data) if exif_data else None
-        if camera_model is None:
-            print(f"Could not read camera model from EXIF data of {file_path.name}.")
-        file_info.camera_model = camera_model
+    # Get date and time from EXIF if available (overrides filename date)
+    date_time = get_date_from_exif_data(exif_data) if exif_data else None
+    if date_time is None:
+        print(f"Could not read date from EXIF data of {file_path.name}. Using file modified date as fallback.")
+        file_info.date = get_file_modified_datetime(file_path)
+    else:
+        file_info.date = date_time
 
-        # Get GPS from EXIF data
-        lat, lon = None, None
-        lat, lon = get_gps_from_exif_data(exif_data) if exif_data else (None, None)
-        if lat is None or lon is None:
-            print(f"Could not read GPS data from {file_path.name}.")
-        file_info.lat = lat
-        file_info.lon = lon
+    # Get camera model from EXIF if available
+    camera_model = get_camera_from_exif_data(exif_data) if exif_data else None
+    if camera_model is None:
+        print(f"Could not read camera model from EXIF data of {file_path.name}.")
+    file_info.camera_model = camera_model
+
+    # Get GPS from EXIF data
+    lat, lon = None, None
+    lat, lon = get_gps_from_exif_data(exif_data) if exif_data else (None, None)
+    if lat is None or lon is None:
+        print(f"Could not read GPS data from {file_path.name}.")
+    file_info.lat = lat
+    file_info.lon = lon
+    
+    # Get address from coordinates
+    address = get_address_from_coords(file_info.lat, file_info.lon)
+    if address is None:
+        print(f"Could not read address from {file_path.name}.")
+    file_info.address = address
+
+    # BLIP AI analysis for keywords and caption
+    if file_path.suffix.lower() in IMAGE_FILE_EXTENSIONS:
+        caption = get_caption_for_image_file(file_path)
+        keywords = get_keywords_from_caption(caption, STOPWORDS)
+        caption_german = translate_english_to_german(caption)
+        keywords_german = get_keywords_from_caption(caption_german, STOPWORDS_GERMAN)
+        file_info.caption = caption
+        file_info.caption_german = caption_german
+        file_info.keywords = keywords
+        file_info.keywords_german = keywords_german
         
-        # Get address from coordinates
-        address = get_address_from_coords(file_info.lat, file_info.lon)
-        if address is None:
-            print(f"Could not read address from {file_path.name}.")
-        file_info.address = address
-
-        # BLIP AI analysis for keywords and caption
-        if file_path.suffix.lower() in [".jpg"]:
-            caption = get_caption_for_image_file(file_path)
-            keywords = get_keywords_from_caption(caption, STOPWORDS)
-            caption_german = translate_english_to_german(caption)
-            keywords_german = get_keywords_from_caption(caption_german, STOPWORDS_GERMAN)
-            file_info.caption = caption
-            file_info.caption_german = caption_german
-            file_info.keywords = keywords
-            file_info.keywords_german = keywords_german
-            
-        elif file_path.suffix.lower() in [".mp4"]:
-            file_info.keywords.append("Video")
-            file_info.keywords_german.append("Video")
+    elif file_path.suffix.lower() in VIDEO_FILE_EXTENSIONS:
+        file_info.keywords.append("Video")
+        file_info.keywords_german.append("Video")
 
     # Save to cache
     cache_file.write_text(
@@ -364,6 +365,10 @@ def analyze_file(file_path: Path) -> FileInfo:
     )
 
     return file_info
+
+def does_filename_meet_criteria(file_path: Path) -> bool:
+    """Check if filename meets criteria to be included in folders"""
+    return file_path.suffix.lower() in IMAGE_FILE_EXTENSIONS.union(VIDEO_FILE_EXTENSIONS)
 
 def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
     """Heuristics to determine if a new folder should be started based on last and current file info

@@ -3,6 +3,8 @@
 INPUT_DIR_STR = "./input_photos"
 OUTPUT_DIR_STR = "./sorted_photos"
 CACHE_DIR_STR = ".cache"
+IMAGE_FILE_EXTENSIONS = {".jpg" }
+VIDEO_FILE_EXTENSIONS = {".mp4"}
 
 # Model paths
 MODEL_NAME = "Salesforce/blip2-flan-t5-xl"
@@ -41,7 +43,7 @@ NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse"
 
 FOLDER_MAX_DISTANCE_METERS = 1000  # Maximum distance in meters to consider photos as belonging to the same folder
 FOLDER_MAX_TIME_DIFFERENCE_HOURS = 3  # Maximum time difference in hours to consider photos as belonging to the same folder
-FOLDER_FORBIDDEN_CHARS = r'[:/\\"\'<>&|,;]'
+FOLDER_FORBIDDEN_CHARS = r'[:/\\"\'<>&|,;]„“' # Characters not used in folder names
 
 # Month names for folder naming
 MONTH_NAMES = [

@@ -11,8 +11,12 @@ def main(input_dir: str, output_dir: str):
     input_path = Path(input_dir)
     output_path = Path(output_dir)
 
+    if not input_path.exists() or not input_path.is_dir():
+        print(f"Input directory {input_path} does not exist or is not a directory.")
+        return
+
     print("\n")
-    print("Analyzing files …")
+    print(f"Analyzing files in {input_path} …")
     files = sorted(input_path.iterdir(), key=lambda f: f.name)
 
     file_infos: list[FileInfo] = []
@@ -43,7 +47,7 @@ def main(input_dir: str, output_dir: str):
     finish_last_folder_info(folder_infos, file_infos, output_path)
 
     print("\n")
-    print("\nCopying files …")
+    print(f"Copying files to {output_path} …")
 
     for folder_info in folder_infos:
         assert folder_info.path is not None  # Path is guaranteed to be set for all folders at this point
