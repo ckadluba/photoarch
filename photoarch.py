@@ -18,34 +18,33 @@ def main(input_dir: str, output_dir: str):
     file_infos: list[FileInfo] = []
     folder_infos: list[FolderInfo] = []
     for file_info in files:
-        
-        # Analyze file
+        # Analyze the file
         datetime_start = datetime.now()
         print(f"Analyzing file ({len(file_infos) + 1}/{len(files)}) {file_info.name} …")
 
         file_info = analyze_file(file_info)
         if file_info.skip:
-            continue # Skip files that did not match criteria
+            continue  # Skip files that do not match the criteria
 
         # Print elapsed time for analysis
         elapsed_time = datetime.now() - datetime_start
         print(f"Analysis took {elapsed_time.total_seconds():.1f} seconds")
-        
-        # Create new and finish old folder if file is different enough
+
+        # Create a new folder and finish the previous one if the file is different enough
         if is_new_folder(file_infos, file_info):
             finish_last_folder_info(folder_infos, file_infos, output_path)
             assert file_info.date is not None  # Date is guaranteed to be set for non-skipped files
             create_folder_info(folder_infos, file_info.date)
-                
+
         file_infos.append(file_info)
         folder_infos[-1].files.append(file_info)
-        
-    # Finish last folder
+
+    # Finish the last folder
     finish_last_folder_info(folder_infos, file_infos, output_path)
 
     print("\n")
     print("\nCopying files …")
-        
+
     for folder_info in folder_infos:
         assert folder_info.path is not None  # Path is guaranteed to be set for all folders at this point
         print(f"- {folder_info.path.name} [{len(folder_info.files)}]")

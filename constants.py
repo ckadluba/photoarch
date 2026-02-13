@@ -8,7 +8,7 @@ CACHE_DIR_STR = ".cache"
 MODEL_NAME = "Salesforce/blip2-flan-t5-xl"
 MODEL_CACHE_DIR = "./models"
 
-# English Stopwords for keyword generation
+# English stopwords for keyword generation
 STOPWORDS = {
     "a", "an", "and", "the", "of", "in", "on", "with", "for", "at", "by", "from",
     "to", "up", "down", "over", "under", "again", "further", "then", "once", "here",
@@ -20,7 +20,7 @@ STOPWORDS = {
     "that", "hers", "ours", "yours", "their", "what", "which", "who", "whom", "whose", "my"
 }
 
-# German Stopwords for keyword generation
+# German stopwords for keyword generation
 STOPWORDS_GERMAN = {
     "ein", "eine", "einer", "eines", "einem", "einen", "und", "der", "die", "das", 
     "von", "in", "an", "auf", "mit", "für", "bei", "durch", "aus", "zu", "nach", 
@@ -39,9 +39,9 @@ STOPWORDS_GERMAN = {
 # OpenStreetMap Nominatim URL
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse"
 
-FOLDER_MAX_DISTANCE_METERS = 1000  # Maximum distance in meters to consider photos in the same folder
-FOLDER_MAX_TIME_DIFFERENCE_HOURS = 3  # Maximum time difference in hours to consider photos in the same folder
-FOLDER_FORBIDDEN_CHARS = r'[:/\\\"\'<>&|,;]'
+FOLDER_MAX_DISTANCE_METERS = 1000  # Maximum distance in meters to consider photos as belonging to the same folder
+FOLDER_MAX_TIME_DIFFERENCE_HOURS = 3  # Maximum time difference in hours to consider photos as belonging to the same folder
+FOLDER_FORBIDDEN_CHARS = r'[:/\\"\'<>&|,;]'
 
 # Month names for folder naming
 MONTH_NAMES = [

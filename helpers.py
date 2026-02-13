@@ -78,6 +78,8 @@ class Address:
 @dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
 class FileInfo:
+
+    # File information schema version
     schema_version: int = 1
 
     path: Path = field(
@@ -191,7 +193,7 @@ def dms_to_decimal(dms, direction) -> float:
     return decimal
 
 def get_address_from_coords(lat, lon) -> Address | None:
-    """Reverse Geocoding via OSM Nominatim"""
+    """Reverse geocoding using OSM Nominatim"""
     if lat is None or lon is None:
         return None
     try:
@@ -224,8 +226,7 @@ def read_address_from_api_response(data):
     address_dict = data.get("address")
     if address_dict:
         address = Address.from_dict(address_dict)
-                    
-        # Set a sensible name
+        # Set a meaningful name
         name = data.get("name")
         if name:
             address.name = name
@@ -236,7 +237,6 @@ def read_address_from_api_response(data):
             address.name = f"{address.city}" if address.city else ""
         address.name += f" {address.city}" if address.city else ""
         return address
-    
     else:
         return None
 
@@ -368,12 +368,12 @@ def analyze_file(file_path: Path) -> FileInfo:
 def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
     """Heuristics to determine if a new folder should be started based on last and current file info
     
-       1. Always start a new folder if no previous files exist
-       2. Start new folder if month or year changed
-       3. Start a new folder if at least two of the following criteria differ:
-          3.1 GPS distance > FOLDER_MAX_DISTANCE_METERS
-          3.2 time difference > FOLDER_MAX_TIME_DIFFERENCE_HOURS
-          3.3 All keywords are different"""
+         1. Always start a new folder if no previous files exist
+         2. Start a new folder if the month or year changed
+         3. Start a new folder if at least two of the following criteria differ:
+             3.1 GPS distance > FOLDER_MAX_DISTANCE_METERS
+             3.2 Time difference > FOLDER_MAX_TIME_DIFFERENCE_HOURS
+             3.3 All keywords are different"""
 
     if file_infos is None or len(file_infos) == 0:
         return True 
@@ -396,7 +396,8 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
         
     # Check time difference
     time_diff = False
-    time_delta = abs((current_info.date - last_info.date).total_seconds()) / 3600
+    last_date, current_date = normalize_datetimes(last_info.date, current_info.date)
+    time_delta = abs((current_date - last_date).total_seconds()) / 3600
     if time_delta > FOLDER_MAX_TIME_DIFFERENCE_HOURS:
         time_diff = True
 
@@ -410,6 +411,15 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
     # Return true to start new folder if at least two criteria differ
     return sum([gps_distance, time_diff, keyword_difference]) >= 2
 
+def normalize_datetimes(dt1, dt2):
+    """Use the same timezone for both datetimes if only one has timezone info, so that they can be compared without errors."""
+    if dt1.tzinfo is None and dt2.tzinfo is not None:
+        dt1 = dt1.replace(tzinfo=dt2.tzinfo)
+    elif dt2.tzinfo is None and dt1.tzinfo is not None:
+        dt2 = dt2.replace(tzinfo=dt1.tzinfo)
+
+    return dt1, dt2
+
 def create_folder_info(folder_infos: list[FolderInfo], start_date: datetime):
     folder_info = FolderInfo(
         start_date = start_date,
@@ -421,13 +431,13 @@ def create_folder_info(folder_infos: list[FolderInfo], start_date: datetime):
     folder_infos.append(folder_info)
 
 def sanitize_for_folder_name(text: str) -> str:
-    """Entfernt verbotene Zeichen aus einem String."""
+    """Removes forbidden characters from a string."""
     if not text:
         return ""
     return re.sub(FOLDER_FORBIDDEN_CHARS, "", text)
 
 def sanitize_folder_info(folder_info):
-    """Bereinigt place und keywords im folder_info für Ordnernamen."""
+    """Cleans up place and keywords in folder_info for folder names."""
     if folder_info.place:
         folder_info.place = sanitize_for_folder_name(folder_info.place)
     
