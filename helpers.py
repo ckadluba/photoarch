@@ -160,9 +160,15 @@ def get_date_from_exif_data(exif_data: str) -> datetime | None:
 
 def get_camera_from_exif_data(exif_data: str) -> str | None:
     """Extract camera make from EXIF data string"""
-    match_camera_make = re.search(r"Camera Model Name\s*:\s*(.*)", exif_data)
-    if match_camera_make:
-        return match_camera_make.group(1).strip()
+    match_camera_model_name = re.search(r"Camera Model Name\s*:\s*(.*)", exif_data)
+    if match_camera_model_name:
+        return match_camera_model_name.group(1).strip()
+
+    # Fallback to "Author" field if "Camera Model Name" is not available (some videos have this instead)
+    match_author = re.search(r"Author\s*:\s*(.*)", exif_data)
+    if match_author:
+        return match_author.group(1).strip()
+
     return None
 
 def get_gps_from_exif_data(exif_data: str) -> tuple[Optional[float], Optional[float]]:
@@ -256,7 +262,6 @@ def get_caption_for_image_file(file_path) -> str:
     except Exception as e:
         print(f"Error during AI analysis of {file_path.name}: {e}")
         return ""
-
 
 def get_keywords_from_caption(caption, stopwords) -> list[str]:
     sanitized_caption = re.sub(FOLDER_FORBIDDEN_CHARS, "", caption)
