@@ -43,7 +43,7 @@ NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse"
 
 FOLDER_MAX_DISTANCE_METERS = 1000  # Maximum distance in meters to consider photos as belonging to the same folder
 FOLDER_MAX_TIME_DIFFERENCE_HOURS = 3  # Maximum time difference in hours to consider photos as belonging to the same folder
-FOLDER_FORBIDDEN_CHARS = r'[:/\\"\'<>&|,;]„“' # Characters not used in folder names
+FOLDER_FORBIDDEN_CHARS = r'[:/\\"\'<>&|,;„“]' # Characters not used in folder names
 
 # Month names for folder naming
 MONTH_NAMES = [
