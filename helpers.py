@@ -357,8 +357,8 @@ def analyze_file(file_path: Path) -> FileInfo:
         file_info.keywords_german = keywords_german
         
     elif file_path.suffix.lower() in VIDEO_FILE_EXTENSIONS:
-        file_info.keywords.append("Video")
-        file_info.keywords_german.append("Video")
+        file_info.keywords.append(KEYWORD_GENERIC_VIDEO)
+        file_info.keywords_german.append(KEYWORD_GENERIC_VIDEO)
 
     # Save to cache
     cache_file.write_text(
@@ -384,7 +384,10 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
          3. Start a new folder if at least two of the following criteria differ:
              3.1 GPS distance > FOLDER_MAX_DISTANCE_METERS
              3.2 Time difference > FOLDER_MAX_TIME_DIFFERENCE_HOURS
-             3.3 All keywords are different"""
+             3.3 All keywords are different
+             3.3.1 If the current or the last file has only KEYWORD_GENERIC_VIDEO as a keyword, 
+                   consider keywords as not different, since videos often have no meaningful keywords 
+                   from the AI analysis and would otherwise cause too many folder splits."""
 
     if file_infos is None or len(file_infos) == 0:
         return True 
@@ -416,7 +419,8 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
     keyword_difference = False
     last_keywords = set(last_info.keywords)
     current_keywords = set(current_info.keywords)
-    if last_keywords.isdisjoint(current_keywords):
+    if (last_keywords != {KEYWORD_GENERIC_VIDEO} and current_keywords != {KEYWORD_GENERIC_VIDEO}) \
+        and last_keywords.isdisjoint(current_keywords):
         keyword_difference = True
 
     # Return true to start new folder if at least two criteria differ

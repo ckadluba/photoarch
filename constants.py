@@ -35,8 +35,11 @@ STOPWORDS_GERMAN = {
     "tun", "tut", "tat", "sein", "ihr", "ihre", "sein", "seine", "sie", "ihnen", 
     "dies", "diese", "dieser", "dieses", "dem", "den", "des", "im", "am", "zum", 
     "zur", "ins", "vom", "beim", "bei", "über", "unter", "um", "darauf", "darin",
-    "ihres", "unser", "unsere", "unserer", "unseres", "euer", "eure", "eurer", "eures"
+    "ihres", "ihrem", "unser", "unsere", "unserer", "unseres", "euer", "eure", 
+    "eurer", "eures"
 }
+
+KEYWORD_GENERIC_VIDEO = "Video"  # Generic keyword for videos without meaningful AI-generated keywords
 
 # OpenStreetMap Nominatim URL
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse"
