@@ -75,7 +75,7 @@ def main(input_dir: str, output_dir: str):
 
     logger.info("Finished.")
 
-if __name__ == "__main__":
+def cli():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Sort and organize photos by date, location, and AI-generated content.")
     parser.add_argument("--input", type=str, default=str(INPUT_DIR), help=f"Input directory containing photos (default: {INPUT_DIR})")
@@ -83,3 +83,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(args.input, args.output)
+
+if __name__ == "__main__":
+    cli()

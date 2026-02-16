@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "photoarch"
+version = "0.1.0"
+description = "AI-powered photo organizer by date, location and content."
+readme = "README.md"
+license = "Apache-2.0"
+authors = [
+    {name = "Christian Kadluba"}
+]
+requires-python = ">=3.10"
+
+dependencies = [
+    "Pillow",
+    "torch",
+    "transformers",
+    "deep-translator",
+    "requests",
+    "colorlog"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "black",
+    "ruff"
+]
+
+[project.scripts]
+photoarch = "photoarch.main:cli"
+
+[tool.setuptools.packages.find]
+include = ["photoarch*"]

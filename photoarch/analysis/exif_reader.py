@@ -1,3 +1,5 @@
+import logging
+import shutil
 import subprocess
 import re
 from pathlib import Path
@@ -8,13 +10,30 @@ from ..config import *
 from ..models import *
 
 
+# Initialization
+
+logger = logging.getLogger(__name__)
+
+
+# Code
+
 def get_exif_data_from_file(path: Path) -> str | None:
+    ensure_exiftool_available()
+
     result = subprocess.run(
         ["exiftool", path],
         stdout=subprocess.PIPE,
         text=True
     )
     return result.stdout if result.returncode == 0 else None
+
+def ensure_exiftool_available():
+    if not shutil.which("exiftool"):
+        logger.error("ExifTool not found in PATH.")
+        raise RuntimeError(
+            "ExifTool is required but not installed. "
+            "Install it from https://exiftool.org/"
+        )
 
 def get_date_from_exif_data(exif_data: str) -> datetime | None:
     """Extract date/time from EXIF data string"""
