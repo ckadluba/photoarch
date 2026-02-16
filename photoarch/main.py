@@ -5,7 +5,8 @@ import argparse
 
 from .config import *
 from .models import *
-from .helpers import *
+from .analysis.file_analyzer import CACHE_DIR, INPUT_DIR, OUTPUT_DIR, analyze_file
+from .fileops.folder_builder import create_folder_info, is_new_folder, finish_last_folder_info
 
 
 def main(input_dir: str, output_dir: str):

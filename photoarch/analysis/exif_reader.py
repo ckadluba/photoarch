@@ -4,8 +4,8 @@ from pathlib import Path
 from datetime import datetime
 from typing import Optional
 
-from photoarch.config import *
-from photoarch.models import *
+from ..config import *
+from ..models import *
 
 
 def get_exif_data_from_file(path: Path) -> str | None:
