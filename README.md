@@ -2,11 +2,11 @@
 
 ## Purpose
 
-This Python script automatically organizes and archives photos and videos which contain EXIF data including geo coordinates, date and time and other metadata. It processes images from a flat input folder and intelligently sorts them into a structured output directory based on date, location, and content.
+This Python module automatically organizes and archives photos and videos which contain EXIF data including geo coordinates, date and time and other metadata. It processes images from a flat input folder and intelligently sorts them into a structured output directory based on date, location, and content.
 
 ### Key Features
 
-- **AI-Powered Content Analysis**: Uses the BLIP-2 (Bootstrapping Language-Image Pre-training) model to generate captions and keywords for images used locally without cloud access. AI processing happens offline. The model is automatically downloaded on first execution of the script.
+- **AI-Powered Content Analysis**: Uses the BLIP-2 (Bootstrapping Language-Image Pre-training) model to generate captions and keywords for images used locally without cloud access. AI processing happens offline. The model is automatically downloaded on first execution of the module.
 - **Geolocation Processing**: Extracts GPS coordinates from EXIF data and performs reverse geocoding to determine locations
 - **Intelligent Grouping**: Automatically groups photos into folders based on:
   - Temporal proximity (time between photos)
@@ -28,7 +28,7 @@ The authors and contributors accept **NO RESPONSIBILITY** for:
 - API rate limits or failures (OpenStreetMap Nominatim, Google Translate)
 - Unexpected behavior or results
 
-**Important**: Always maintain backups of your original photos before processing them with this script. Test with a small subset of images first to ensure the results meet your expectations.
+**Important**: Always maintain backups of your original photos before processing them with this module. Test with a small subset of images first to ensure the results meet your expectations.
 
 ## Prerequisites
 
@@ -63,7 +63,7 @@ Ensure the following directories exist (they will be created automatically if mi
 Place your photos in the `input_photos/` directory and run:
 
 ```bash
-python photoarch.py
+python -m photoarch.main
 ```
 
 ### Custom Input/Output Directories
@@ -71,7 +71,7 @@ python photoarch.py
 Specify custom input and output directories:
 
 ```bash
-python photoarch.py --input /path/to/photos --output /path/to/sorted
+python -m photoarch.main --input /path/to/photos --output /path/to/sorted
 ```
 
 ### Command-Line Arguments
@@ -81,7 +81,7 @@ python photoarch.py --input /path/to/photos --output /path/to/sorted
 
 ### Output Structure
 
-The script creates a hierarchical folder structure:
+The module creates a hierarchical folder structure:
 
 ```
 sorted_photos/
@@ -154,7 +154,7 @@ Each photo has an accompanying JSON metadata file containing:
 
 ### Configuration
 
-You can modify constants in [constants.py](constants.py) to customize behavior:
+You can modify constants in [photocarch/config.py](photocarch/config.py) to customize behavior:
 
 - `FOLDER_MAX_DISTANCE_METERS` - Maximum distance for same folder (default: 1000m)
 - `FOLDER_MAX_TIME_DIFFERENCE_HOURS` - Maximum time gap for same folder (default: 3 hours)
@@ -164,7 +164,7 @@ You can modify constants in [constants.py](constants.py) to customize behavior:
 
 ### Caching
 
-The script caches analysis results in `.cache/` to speed up repeated runs. Delete this folder to force re-analysis of all photos.
+The module caches analysis results in `.cache/` to speed up repeated runs. Delete this folder to force re-analysis of all photos.
 
 ### Notes
 
@@ -173,7 +173,7 @@ The script caches analysis results in `.cache/` to speed up repeated runs. Delet
 - Keyword translation uses Google Translate API (may be rate-limited)
 - AI analysis of the image happens offline with a downloaded BLIP-2 model
 - Original files are **copied**, not moved (originals remain in input directory)
-- The script should work with photos and videos from different cameras and phones 
+- The module should work with photos and videos from different cameras and phones 
   as long as they contain EXIF data. Yet it was mainly tested with files made with 
   Google Pixel 8 and Samsung Galaxy A15 phones.
 

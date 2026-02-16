@@ -3,8 +3,9 @@ from pathlib import Path
 from datetime import datetime
 import argparse
 
-from constants import *
-from helpers import *
+from .config import *
+from .models import *
+from .helpers import *
 
 
 def main(input_dir: str, output_dir: str):
