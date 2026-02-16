@@ -5,6 +5,7 @@ sorted_photos/
 models/*
 exiftool.exe
 exiftool_files/
+tests/data/output
 .venv/
 
 # Byte-compiled / optimized / DLL files

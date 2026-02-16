@@ -1,3 +1,4 @@
+from __future__ import annotations
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, LetterCase, config
 from pathlib import Path

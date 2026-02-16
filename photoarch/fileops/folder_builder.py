@@ -129,8 +129,8 @@ def create_folder_name(folder_info, output_dir: Path):
     folder_name: str = f"{folder_info.start_date.strftime('%Y-%m-%dT%H%M')}"
     folder_name += f"{' - ' + folder_info.end_date.strftime('%dT%H%M') if folder_info.end_date.day != folder_info.start_date.day else ''}"
     folder_name += f"{' ' + folder_info.place if folder_info.place is not None else ''}"
-    folder_name += f"{' ' + ' '.join(folder_info.keywords_german) if folder_info.keywords_german else ''}"
-
+    folder_name += f"{' ' + ' '.join(sorted(folder_info.keywords_german, key=str.lower)) if folder_info.keywords_german else ''}"
+    
     folder_info.path = output_dir 
     folder_info.path /= str(folder_info.start_date.year)
     folder_info.path /= MONTH_NAMES[folder_info.start_date.month - 1]
