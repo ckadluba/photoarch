@@ -1,3 +1,4 @@
+import logging
 import re
 import json
 from pathlib import Path
@@ -17,6 +18,7 @@ INPUT_DIR = Path(INPUT_DIR_STR)
 OUTPUT_DIR = Path(OUTPUT_DIR_STR)
 CACHE_DIR = Path(CACHE_DIR_STR)
 
+logger = logging.getLogger(__name__)
 _captioner = CaptionGenerator(device="cpu")  # BLIP-2 model for AI captioning (CPU is sufficient for inference, no need for GPU)
 
 
@@ -28,7 +30,7 @@ def analyze_file(file_path: Path) -> FileInfo:
     # Use cache entry if available
     cache_file = CACHE_DIR / (file_path.stem + ".json")
     if cache_file.exists():
-        print(f"Using cached {cache_file.name}.")
+        logger.info(f"Using cached {cache_file.name}.")
         with open(cache_file, "r", encoding="utf-8") as f:
             return FileInfo.from_json(f.read())
     
@@ -47,19 +49,19 @@ def analyze_file(file_path: Path) -> FileInfo:
     
     # Check filename criteria
     if not does_filename_meet_criteria(file_path):
-        print(f"Filename does not match criteria {file_path.name}. Will skip.")
+        logger.info(f"Filename does not match criteria {file_path.name}. Will skip.")
         file_info.skip = True
         return file_info
 
     # Process file
     exif_data = get_exif_data_from_file(file_path)
     if exif_data is None:
-        print(f"Could not read EXIF data from {file_path.name}.")
+        logger.warning(f"Could not read EXIF data from {file_path.name}.")
 
     # Get date and time from EXIF if available (overrides filename date)
     date_time = get_date_from_exif_data(exif_data) if exif_data else None
     if date_time is None:
-        print(f"Could not read date from EXIF data of {file_path.name}. Using file modified date as fallback.")
+        logger.warning(f"Could not read date from EXIF data of {file_path.name}. Using file modified date as fallback.")
         file_info.date = get_file_modified_datetime(file_path)
     else:
         file_info.date = date_time
@@ -67,21 +69,21 @@ def analyze_file(file_path: Path) -> FileInfo:
     # Get camera model from EXIF if available
     camera_model = get_camera_from_exif_data(exif_data) if exif_data else None
     if camera_model is None:
-        print(f"Could not read camera model from EXIF data of {file_path.name}.")
+        logger.warning(f"Could not read camera model from EXIF data of {file_path.name}.")
     file_info.camera_model = camera_model
 
     # Get GPS from EXIF data
     lat, lon = None, None
     lat, lon = get_gps_from_exif_data(exif_data) if exif_data else (None, None)
     if lat is None or lon is None:
-        print(f"Could not read GPS data from {file_path.name}.")
+        logger.warning(f"Could not read GPS data from {file_path.name}.")
     file_info.lat = lat
     file_info.lon = lon
     
     # Get address from coordinates
     address = get_address_from_coords(file_info.lat, file_info.lon)
     if address is None:
-        print(f"Could not read address from {file_path.name}.")
+        logger.warning(f"Could not read address from {file_path.name}.")
     file_info.address = address
 
     # BLIP AI analysis for keywords and caption

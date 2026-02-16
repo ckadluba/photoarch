@@ -1,7 +1,13 @@
+import logging
 import requests
 
 from ..config import *
 from ..models import *
+
+
+# Initialization
+
+logger = logging.getLogger(__name__)
 
 
 def get_address_from_coords(lat, lon) -> Address | None:
@@ -30,7 +36,7 @@ def get_address_from_coords(lat, lon) -> Address | None:
         return read_address_from_api_response(data)
 
     except Exception as e:
-        print(f"OSM API Error: {e}")
+        logger.error(f"OSM API Error: {e}")
         return None
 
 def read_address_from_api_response(data):

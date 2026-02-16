@@ -1,17 +1,17 @@
-from collections import Counter
-import requests
-import re
-import json
-from pathlib import Path
-from datetime import datetime
+import logging
 from PIL import Image
-from deep_translator import GoogleTranslator
-from geopy.distance import geodesic
 import torch
 from transformers import Blip2Processor, Blip2ForConditionalGeneration
 
 from ..config import *
 
+
+# Initialization
+
+logger = logging.getLogger(__name__)
+
+
+# Code
 
 class CaptionGenerator:
     def __init__(self, device: str = "cpu"):
@@ -21,7 +21,7 @@ class CaptionGenerator:
 
     def _load_model(self):
         if self._model is None:
-            print("Loading BLIP-2 Model (CPU) …")
+            logger.info("Loading BLIP-2 Model (CPU) …")
             self._processor = Blip2Processor.from_pretrained(
                 MODEL_NAME,
                 cache_dir=MODEL_CACHE_DIR,
@@ -52,6 +52,6 @@ class CaptionGenerator:
             return self._processor.decode(output[0], skip_special_tokens=True)
 
         except Exception as e:
-            print(f"Error during AI analysis of {file_path.name}: {e}")
+            logger.error(f"Error during AI analysis of {file_path.name}: {e}")
             return ""
 

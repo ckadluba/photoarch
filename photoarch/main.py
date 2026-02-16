@@ -1,3 +1,4 @@
+import logging
 import shutil
 from pathlib import Path
 from datetime import datetime
@@ -5,20 +6,28 @@ import argparse
 
 from .config import *
 from .models import *
+from .logging_config import setup_logging
 from .analysis.file_analyzer import CACHE_DIR, INPUT_DIR, OUTPUT_DIR, analyze_file
 from .fileops.folder_builder import create_folder_info, is_new_folder, finish_last_folder_info
 
+
+# Initialization
+
+setup_logging()
+logger = logging.getLogger(__name__)
+
+
+# Code
 
 def main(input_dir: str, output_dir: str):
     input_path = Path(input_dir)
     output_path = Path(output_dir)
 
     if not input_path.exists() or not input_path.is_dir():
-        print(f"Input directory {input_path} does not exist or is not a directory.")
+        logger.error(f"Input directory {input_path} does not exist or is not a directory.")
         return
 
-    print("\n")
-    print(f"Analyzing files in {input_path} …")
+    logger.info(f"Analyzing files in {input_path} …")
     files = sorted(input_path.iterdir(), key=lambda f: f.name)
 
     file_infos: list[FileInfo] = []
@@ -26,7 +35,7 @@ def main(input_dir: str, output_dir: str):
     for file_info in files:
         # Analyze the file
         datetime_start = datetime.now()
-        print(f"Analyzing file ({len(file_infos) + 1}/{len(files)}) {file_info.name} …")
+        logger.info(f"Analyzing file ({len(file_infos) + 1}/{len(files)}) {file_info.name} …")
 
         file_info = analyze_file(file_info)
         if file_info.skip:
@@ -34,7 +43,7 @@ def main(input_dir: str, output_dir: str):
 
         # Print elapsed time for analysis
         elapsed_time = datetime.now() - datetime_start
-        print(f"Analysis took {elapsed_time.total_seconds():.1f} seconds")
+        logger.info(f"Analysis took {elapsed_time.total_seconds():.1f} seconds")
 
         # Create a new folder and finish the previous one if the file is different enough
         if is_new_folder(file_infos, file_info):
@@ -48,16 +57,14 @@ def main(input_dir: str, output_dir: str):
     # Finish the last folder
     finish_last_folder_info(folder_infos, file_infos, output_path)
 
-    print("\n")
-    print(f"Copying files to {output_path} …")
-
+    logger.info(f"Copying files to {output_path} …")
     for folder_info in folder_infos:
         assert folder_info.path is not None  # Path is guaranteed to be set for all folders at this point
-        print(f"- {folder_info.path.name} [{len(folder_info.files)}]")
+        logger.info(f"- {folder_info.path.name} [{len(folder_info.files)}]")
         folder_meta_path = folder_info.path / "metadata"
         folder_meta_path.mkdir(parents=True, exist_ok=True)
         for file_info in folder_info.files:
-            print(f"   - {file_info.path}")
+            logger.info(f"   - {file_info.path}")
             photo_file_src_path = input_path / file_info.path
             photo_file_dst_path = folder_info.path / file_info.path
             shutil.copy(photo_file_src_path, photo_file_dst_path)
@@ -66,7 +73,7 @@ def main(input_dir: str, output_dir: str):
             meta_file_dst_path = folder_meta_path / file_meta_name
             shutil.copy(meta_file_src_path, meta_file_dst_path)
 
-    print("Finished.")
+    logger.info("Finished.")
 
 if __name__ == "__main__":
     # Parse command line arguments
