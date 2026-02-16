@@ -55,10 +55,15 @@ def get_camera_from_exif_data(exif_data: str) -> str | None:
     if match_camera_model_name:
         return match_camera_model_name.group(1).strip()
 
-    # Fallback to "Author" field if "Camera Model Name" is not available (some videos have this instead)
+    # Fallback to "Author" field
     match_author = re.search(r"Author\s*:\s*(.*)", exif_data)
     if match_author:
         return match_author.group(1).strip()
+
+    # Fallback to "Android Model" field
+    match_android_model = re.search(r"Android Model\s*:\s*(.*)", exif_data)
+    if match_android_model:
+        return match_android_model.group(1).strip()
 
     return None
 
