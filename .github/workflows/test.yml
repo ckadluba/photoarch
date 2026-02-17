@@ -1,4 +1,4 @@
-name: Test
+name: Build and Test
 
 on:
   push:
@@ -25,11 +25,10 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest
         
-    - name: Build and install photoarch module
+    - name: Build and install photoarch module with dev dependencies
       run: |
-        pip install -e .
+        pip install -e .[dev]
         
     - name: Run tests with pytest
       run: |
