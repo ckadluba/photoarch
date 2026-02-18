@@ -1,5 +1,7 @@
 # Photo Archive Organizer
 
+[![Build and Test](https://github.com/ckadluba/photoarch/actions/workflows/test.yml/badge.svg)](https://github.com/ckadluba/photoarch/actions/workflows/test.yml)
+
 ## Purpose
 
 Photo Archive Organizer is a complete Python module/package for automatically organizing and archiving photos and videos containing EXIF data (geo coordinates, date/time, and other metadata). It processes images from a flat input folder and intelligently sorts them into a structured output directory based on date, location, and content.
