@@ -59,15 +59,15 @@ def test_photoarch_integration(clean_output):
     # Check photo files were correctly copied to photo folder 1
     photo_folder_1_files = sorted(photo_folder_1.iterdir())
     assert len(photo_folder_1_files) == 3, "More or less than exactly three objects were found in photo folder 1"
-    photo_folder_1_file_1 = photo_folder_1_files[0]
-    assert photo_folder_1_file_1.is_file() and photo_folder_1_file_1.name == "PXL_20250708_055317372.jpg", \
-        "The first object in photo folder 1 should be the photo file 'PXL_20250708_055317372.jpg'"
-    photo_folder_1_file_2 = photo_folder_1_files[1]
-    assert photo_folder_1_file_2.is_file() and photo_folder_1_file_2.name == "PXL_20250708_055353541.jpg", \
-        "The second object in photo folder 1 should be the photo file 'PXL_20250708_055353541.jpg'"
-    photo_folder_1_metadata_folder = photo_folder_1_files[2]
+    photo_folder_1_metadata_folder = photo_folder_1_files[0]
     assert photo_folder_1_metadata_folder.is_dir() and photo_folder_1_metadata_folder.name == "metadata", \
-        "The third object in photo folder 1 should be the metadata folder"
+        "The first object in photo folder 1 should be the metadata folder"
+    photo_folder_1_file_1 = photo_folder_1_files[1]
+    assert photo_folder_1_file_1.is_file() and photo_folder_1_file_1.name == "PXL_20250708_055317372.jpg", \
+        "The second object in photo folder 1 should be the photo file 'PXL_20250708_055317372.jpg'"
+    photo_folder_1_file_2 = photo_folder_1_files[2]
+    assert photo_folder_1_file_2.is_file() and photo_folder_1_file_2.name == "PXL_20250708_055353541.jpg", \
+        "The third object in photo folder 1 should be the photo file 'PXL_20250708_055353541.jpg'"
 
     # Check metadata files were correctly copied to photo folder 1 metadata folder
     photo_folder_1_metadata_files = sorted(photo_folder_1_metadata_folder.glob("*.json"))
@@ -82,12 +82,12 @@ def test_photoarch_integration(clean_output):
     # Check photo files were correctly copied to photo folder 2
     photo_folder_2_files = sorted(photo_folder_2.iterdir())
     assert len(photo_folder_2_files) == 2, "More or less than exactly two objects were found in photo folder 2"
-    photo_folder_2_file_1 = photo_folder_2_files[0]
-    assert photo_folder_2_file_1.is_file() and photo_folder_2_file_1.name == "PXL_20250708_095842343.jpg", \
-        "The first object in photo folder 2 should be the photo file 'PXL_20250708_095842343.jpg'"
-    photo_folder_2_metadata_folder = photo_folder_2_files[1]
+    photo_folder_2_metadata_folder = photo_folder_2_files[0]
     assert photo_folder_2_metadata_folder.is_dir() and photo_folder_2_metadata_folder.name == "metadata", \
-        "The second object in photo folder 2 should be the metadata folder"
+        "The first object in photo folder 2 should be the metadata folder"
+    photo_folder_2_file_1 = photo_folder_2_files[1]
+    assert photo_folder_2_file_1.is_file() and photo_folder_2_file_1.name == "PXL_20250708_095842343.jpg", \
+        "The second object in photo folder 2 should be the photo file 'PXL_20250708_095842343.jpg'"
 
     # Check metadata files were correctly copied to photo folder 2 metadata folder
     photo_folder_2_metadata_files = sorted(photo_folder_2_metadata_folder.glob("*.json"))

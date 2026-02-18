@@ -35,13 +35,13 @@ The authors and contributors accept **NO RESPONSIBILITY** for:
 ## Prerequisites
 
 ### 1. ExifTool
+
 Download and install ExifTool for video metadata extraction:
   - Download from: [https://exiftool.org/](https://exiftool.org/)
   - Windows: Place `exiftool.exe` in the project root directory or add to PATH
   - Linux/Mac: Install via package manager (e.g., `apt install exiftool` or `brew install exiftool`)
 
 ### 2. Python Installation
-
 
 Install required Python packages:
 ```bash
@@ -51,7 +51,7 @@ pip install -r requirements.txt
 #### Install in Editable Mode
 To install the module in editable mode (for development):
 ```bash
-pip install -e .
+pip install -e .[dev]
 ```
 This allows you to make changes to the code and use them immediately without reinstalling.
 
@@ -61,6 +61,7 @@ It is recommended to use a virtual environment:
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+pip install -e .[dev]
 ```
 
 ### 3. Module Installation
@@ -85,25 +86,12 @@ Ensure the following directories exist (they will be created automatically if mi
 
 ## Usage
 
-
 ### Basic Usage
 Place your photos in the `input_photos/` directory and run:
 ```bash
 python -m photoarch.main
 ```
 
-### Custom Input/Output Directories
-Specify custom input and output directories:
-```bash
-python -m photoarch.main --input /path/to/photos --output /path/to/sorted
-```
-
-### Using as a Python Module
-You can also use the module in your own scripts:
-```python
-from photoarch import main
-main.run(input_dir="/path/to/photos", output_dir="/path/to/sorted")
-```
 
 ### Custom Input/Output Directories
 Specify custom input and output directories:

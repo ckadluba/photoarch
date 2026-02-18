@@ -9,7 +9,10 @@
             "name": "Python Debugger: photoarch.py",
             "type": "debugpy",
             "request": "launch",
-            "program": "./photoarch.py",
+            "program": "python",
+            "args": [
+                "-m", "photoarch.main"
+            ],
             "console": "integratedTerminal"
         }
     ]

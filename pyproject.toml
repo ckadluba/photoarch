@@ -11,7 +11,7 @@ license = "Apache-2.0"
 authors = [
     {name = "Christian Kadluba"}
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.14"
 
 dependencies = [
     "Pillow",
