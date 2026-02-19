@@ -28,7 +28,7 @@ def main(input_dir: str, output_dir: str):
         return
 
     logger.info(f"Analyzing files in {input_path} …")
-    files = sorted(input_path.iterdir(), key=lambda f: f.name)
+    files = sorted(input_path.iterdir(), key=lambda f: f.stat().st_mtime)  # Sort files by modification time
 
     file_infos: list[FileInfo] = []
     folder_infos: list[FolderInfo] = []
