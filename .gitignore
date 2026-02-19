@@ -1,5 +1,5 @@
 # Project-specific folders and files
-.cache/
+.photoarch/
 input_photos/
 sorted_photos/
 models/*

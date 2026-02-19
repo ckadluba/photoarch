@@ -2,7 +2,7 @@
 
 INPUT_DIR_STR = "./input_photos"
 OUTPUT_DIR_STR = "./sorted_photos"
-CACHE_DIR_STR = ".cache"
+CACHE_DIR_STR = ".photoarch"
 IMAGE_FILE_EXTENSIONS = {".jpg" }
 VIDEO_FILE_EXTENSIONS = {".mp4"}
 

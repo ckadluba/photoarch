@@ -82,7 +82,7 @@ python -m photoarch.main
 Ensure the following directories exist (they will be created automatically if missing):
   - `input_photos/` - Place your photos here (or specify alternative path using `--input` command line parameter)
   - `sorted_photos/` - Output directory (will be created; can also be specified using `--output`)
-  - `.cache/` - Temporary cache for analysis results
+  - `.photoarch/` - Temporary cache for analysis results
 
 ## Usage
 
@@ -195,7 +195,7 @@ You can modify constants in [photoarch/config.py](photoarch/config.py) to custom
 
 ### Caching
 
-The module caches analysis results in `.cache/` to speed up repeated runs. Delete this folder to force re-analysis of all photos.
+The module caches analysis results in `.photoarch/` to speed up repeated runs. Delete this folder to force re-analysis of all photos.
 
 ### Notes
 

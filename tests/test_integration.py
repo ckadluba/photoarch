@@ -7,7 +7,7 @@ from photoarch.main import main
 BASE_DIR = Path(__file__).parent
 INPUT_DIR = BASE_DIR / "data/input"
 OUTPUT_DIR = BASE_DIR / "data/output"
-CACHE_DIR = Path(__file__).parent.parent / ".cache"  # Assuming cache is in the project root
+CACHE_DIR = Path(__file__).parent.parent / ".photoarch"  # Assuming cache is in the project root
 
 
 # Fixture to clean output folder before and after each test
