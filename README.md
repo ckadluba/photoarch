@@ -187,7 +187,7 @@ Each photo has an accompanying JSON metadata file containing:
 
 You can modify constants in [photoarch/config.py](photoarch/config.py) to customize behavior:
 
-- `FOLDER_MAX_DISTANCE_METERS` - Maximum distance for same folder (default: 1000m)
+- `FOLDER_MAX_DISTANCE_METERS` - Maximum distance for same folder (default: 1500m)
 - `FOLDER_MAX_TIME_DIFFERENCE_HOURS` - Maximum time gap for same folder (default: 3 hours)
 - `STOPWORDS` - English stopwords to filter from keywords
 - `STOPWORDS_GERMAN` - German stopwords to filter from keywords
