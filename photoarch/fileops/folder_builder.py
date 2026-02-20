@@ -1,11 +1,19 @@
 from collections import Counter
+import logging
 import re
 from pathlib import Path
-from geopy.distance import geodesic
+from geopy.distance import distance, distance, geodesic
 
 from ..config import *
 from ..models import *
 
+
+# Initialization
+
+logger = logging.getLogger(__name__)
+
+
+# Code
 
 def create_folder_info(folder_infos: list[FolderInfo], start_date: datetime):
     folder_info = FolderInfo(
@@ -36,7 +44,7 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
     last_info = file_infos[-1]
 
     assert last_info.date is not None  # Date is guaranteed to be set for all non-skipped files
-    assert current_info.date is not None  # Date is guaranteed to be set for all non
+    assert current_info.date is not None  # Date is guaranteed to be set for all non-skipped files
 
     if last_info.date.year != current_info.date.year or last_info.date.month != current_info.date.month:
         return True
@@ -46,7 +54,7 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
     last_geo = (last_info.lat, last_info.lon)
     current_geo = (current_info.lat, current_info.lon)
     distance = geodesic(last_geo, current_geo).meters
-    if distance > FOLDER_MAX_DISTANCE_METERS:  # mehr als 1000 Meter
+    if distance > FOLDER_MAX_DISTANCE_METERS:
         gps_distance = True
         
     # Check time difference
@@ -65,7 +73,10 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
         keyword_difference = True
 
     # Return true to start new folder if at least two criteria differ
-    return sum([gps_distance, time_diff, keyword_difference]) >= 2
+    start_new_folder = sum([gps_distance, time_diff, keyword_difference]) >= 2
+    logger.debug(f"is_new_folder: distance={distance:.2f}m (gps_distance={gps_distance}), time_diff={time_delta:.2f}h (time_diff={time_diff}), keyword_difference={keyword_difference}, start_new_folder={start_new_folder}")  
+
+    return start_new_folder
 
 def normalize_datetimes(dt1, dt2):
     """Use the same timezone for both datetimes if only one has timezone info, so that they can be compared without errors."""
@@ -107,6 +118,8 @@ def finish_last_folder_info(folder_infos: list[FolderInfo], file_infos: list[Fil
 
     sanitize_folder_info(folder_info)
     create_folder_name(folder_info, output_dir)
+
+    logger.debug(f"finish_last_folder_info: folder_info={folder_info.path.name}") 
 
     return True
 

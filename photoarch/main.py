@@ -13,7 +13,6 @@ from .fileops.folder_builder import create_folder_info, is_new_folder, finish_la
 
 # Initialization
 
-setup_logging()
 logger = logging.getLogger(__name__)
 
 
@@ -80,8 +79,15 @@ def cli():
     parser = argparse.ArgumentParser(description="Sort and organize photos by date, location, and AI-generated content.")
     parser.add_argument("--input", type=str, default=str(INPUT_DIR), help=f"Input directory containing photos (default: {INPUT_DIR})")
     parser.add_argument("--output", type=str, default=str(OUTPUT_DIR), help=f"Output directory for sorted photos (default: {OUTPUT_DIR})")
+    parser.add_argument(
+        "--log-level",
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level",
+    )
     args = parser.parse_args()
 
+    setup_logging(args.log_level)
     main(args.input, args.output)
 
 if __name__ == "__main__":

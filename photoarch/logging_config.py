@@ -1,9 +1,10 @@
 import logging
 import colorlog
 
-def setup_logging(level=logging.INFO):
+def setup_logging(level: str = "INFO") -> None:
     logger = logging.getLogger()
-    logger.setLevel(level)
+    numeric_level = getattr(logging, level.upper(), logging.INFO)
+    logger.setLevel(numeric_level)
 
     if logger.handlers:
         logger.handlers.clear()
