@@ -37,21 +37,16 @@ class CaptionGenerator:
 
     def get_caption_for_image_file(self, file_path) -> str:
         self._load_model()
-        try:
-            img = Image.open(file_path).convert("RGB")
 
-            inputs = self._processor(images=img, return_tensors="pt").to(self.device)
+        img = Image.open(file_path).convert("RGB")
 
-            with torch.no_grad():
-                output = self._model.generate(
-                    **inputs,
-                    max_new_tokens=50,
-                    num_beams=3
-                )
+        inputs = self._processor(images=img, return_tensors="pt").to(self.device)
 
-            return self._processor.decode(output[0], skip_special_tokens=True)
+        with torch.no_grad():
+            output = self._model.generate(
+                **inputs,
+                max_new_tokens=50,
+                num_beams=3
+            )
 
-        except Exception as e:
-            logger.error(f"Error during AI analysis of {file_path.name}: {e}")
-            return ""
-
+        return self._processor.decode(output[0], skip_special_tokens=True)
