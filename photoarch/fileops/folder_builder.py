@@ -47,34 +47,36 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
     assert current_info.date is not None  # Date is guaranteed to be set for all non-skipped files
 
     if last_info.date.year != current_info.date.year or last_info.date.month != current_info.date.month:
+        logger.debug(f"is_new_folder: month/year change, last={last_info.date}, current={current_info.date}), start_new_folder=True")  
         return True
 
-    # Check GPS distance
-    gps_distance = False
-    last_geo = (last_info.lat, last_info.lon)
-    current_geo = (current_info.lat, current_info.lon)
-    distance = geodesic(last_geo, current_geo).meters
-    if distance > FOLDER_MAX_DISTANCE_METERS:
-        gps_distance = True
-        
     # Check time difference
-    time_diff = False
+    time_changed = False
     last_date, current_date = normalize_datetimes(last_info.date, current_info.date)
     time_delta = abs((current_date - last_date).total_seconds()) / 3600
-    if time_delta > FOLDER_MAX_TIME_DIFFERENCE_HOURS:
-        time_diff = True
+    time_changed = time_delta > FOLDER_MAX_TIME_DIFFERENCE_HOURS
 
+    # Check GPS distance
+    location_changed = False
+    location_distance = 0.0
+    if last_info.lat is not None and last_info.lon is not None and current_info.lat is not None and current_info.lon is not None:
+        last_geo = (last_info.lat, last_info.lon)
+        current_geo = (current_info.lat, current_info.lon)
+        location_distance = geodesic(last_geo, current_geo).meters
+        location_changed = location_distance > FOLDER_MAX_DISTANCE_METERS
+    else:
+        logger.debug(f"is_new_folder: missing GPS data, last_info.lat={last_info.lat}, last_info.lon={last_info.lon}, current_info.lat={current_info.lat}, current_info.lon={current_info.lon}, skipping GPS distance check")
+     
     # Check if keywords differ significantly (simple check)
-    keyword_difference = False
+    keywords_changed = False
     last_keywords = set(last_info.keywords)
     current_keywords = set(current_info.keywords)
-    if (last_keywords != {KEYWORD_GENERIC_VIDEO} and current_keywords != {KEYWORD_GENERIC_VIDEO}) \
-        and last_keywords.isdisjoint(current_keywords):
-        keyword_difference = True
+    keywords_changed = (last_keywords != {KEYWORD_GENERIC_VIDEO} and current_keywords != {KEYWORD_GENERIC_VIDEO}) \
+        and last_keywords.isdisjoint(current_keywords)
 
     # Return true to start new folder if at least two criteria differ
-    start_new_folder = sum([gps_distance, time_diff, keyword_difference]) >= 2
-    logger.debug(f"is_new_folder: distance={distance:.2f}m (gps_distance={gps_distance}), time_diff={time_delta:.2f}h (time_diff={time_diff}), keyword_difference={keyword_difference}, start_new_folder={start_new_folder}")  
+    start_new_folder = sum([time_changed, location_changed, keywords_changed]) >= 2
+    logger.debug(f"is_new_folder: decision, time_delta={time_delta:.2f}h (time_changed={time_changed}), location_distance={location_distance:.2f}m (location_changed={location_changed}), keyword_difference={keywords_changed}, start_new_folder={start_new_folder}")  
 
     return start_new_folder
 
@@ -119,7 +121,7 @@ def finish_last_folder_info(folder_infos: list[FolderInfo], file_infos: list[Fil
     sanitize_folder_info(folder_info)
     create_folder_name(folder_info, output_dir)
 
-    logger.debug(f"finish_last_folder_info: folder_info={folder_info.path.name}") 
+    logger.debug(f"finish_last_folder_info: folder_info.path.name={folder_info.path.name if folder_info.path else 'None'}") 
 
     return True
 
