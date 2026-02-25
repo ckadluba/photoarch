@@ -25,7 +25,8 @@ def clean_output():
     shutil.rmtree(OUTPUT_DIR)  # cleanup after test
 
 # Integration test
-def test_photoarch_integration(clean_output):
+@pytest.mark.longrunning
+def test_photoarch_process_photo_folder(clean_output):
     # Arrange: ensure 3 test files exist
     input_files = list(INPUT_DIR.glob("*"))
     assert len(input_files) == 3, "Please provide exactly 3 test files in data/input"
