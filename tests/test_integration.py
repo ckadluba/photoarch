@@ -32,7 +32,7 @@ def test_photoarch_process_photo_folder(clean_output):
     assert len(input_files) == 3, "Please provide exactly 3 test files in data/input"
 
     # Act: run the main function
-    main(str(INPUT_DIR), str(OUTPUT_DIR))
+    main(str(INPUT_DIR), str(OUTPUT_DIR), "filename")
 
     # Assert
     # Check the year folder was created with correct name
