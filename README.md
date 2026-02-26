@@ -110,6 +110,7 @@ main.run(input_dir="/path/to/photos", output_dir="/path/to/sorted")
 ### Command-Line Arguments
 - `--input` - Input directory containing photos (default: `input_photos`)
 - `--output` - Output directory for sorted photos (default: `sorted_photos`)
+- `--input-files-order` - Order to process input files: `filename` or `modified-date` (default: `filename`)
 
 ### Output Structure
 

@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 # Code
 
-def main(input_dir: str, output_dir: str):
+def main(input_dir: str, output_dir: str, input_files_order: str):
     input_path = Path(input_dir)
     output_path = Path(output_dir)
 
@@ -27,7 +27,10 @@ def main(input_dir: str, output_dir: str):
         return
 
     logger.info(f"Analyzing files in {input_path} …")
-    files = sorted(input_path.iterdir(), key=lambda f: f.stat().st_mtime)  # Sort files by modification time
+    if input_files_order == "filename":
+        files = sorted(input_path.iterdir(), key=lambda f: f.name)
+    else:
+        files = sorted(input_path.iterdir(), key=lambda f: f.stat().st_mtime)  # Sort files by modification time
 
     file_infos: list[FileInfo] = []
     folder_infos: list[FolderInfo] = []
@@ -85,10 +88,16 @@ def cli():
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         help="Set the logging level",
     )
+    parser.add_argument(
+        "--input-files-order",
+        default="filename",
+        choices=["filename", "modified-date"],
+        help="Process input files in filename or modified date order (default: filename)",
+    )
     args = parser.parse_args()
 
     setup_logging(args.log_level)
-    main(args.input, args.output)
+    main(args.input, args.output, input_files_order=args.input_files_order)
 
 if __name__ == "__main__":
     cli()
