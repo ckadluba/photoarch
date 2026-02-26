@@ -2,10 +2,11 @@ from collections import Counter
 import logging
 import re
 from pathlib import Path
-from geopy.distance import distance, distance, geodesic
+from geopy.distance import geodesic
 
 from ..config import *
 from ..models import *
+from ..services.semantic_similarity import keywords_are_different
 
 
 # Initialization
@@ -67,12 +68,12 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
     else:
         logger.debug(f"is_new_folder: missing GPS data, last_info.lat={last_info.lat}, last_info.lon={last_info.lon}, current_info.lat={current_info.lat}, current_info.lon={current_info.lon}, skipping GPS distance check")
      
-    # Check if keywords differ significantly (simple check)
+    # Check if keywords differ significantly (semantic similarity check)
     keywords_changed = False
     last_keywords = set(last_info.keywords)
     current_keywords = set(current_info.keywords)
     keywords_changed = (last_keywords != {KEYWORD_GENERIC_VIDEO} and current_keywords != {KEYWORD_GENERIC_VIDEO}) \
-        and last_keywords.isdisjoint(current_keywords)
+        and keywords_are_different(last_keywords, current_keywords)
 
     # Return true to start new folder if at least two criteria differ
     start_new_folder = sum([time_changed, location_changed, keywords_changed]) >= 2

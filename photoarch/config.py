@@ -48,6 +48,10 @@ FOLDER_MAX_DISTANCE_METERS = 1500  # Maximum distance in meters to consider phot
 FOLDER_MAX_TIME_DIFFERENCE_HOURS = 3  # Maximum time difference in hours to consider photos as belonging to the same folder
 FOLDER_FORBIDDEN_CHARS = r'[:/\\"\'<>&|.,;„“]' # Characters not used in folder names
 
+# Semantic similarity settings
+SEMANTIC_SIMILARITY_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"  # Multilingual model for German keyword comparison
+SEMANTIC_SIMILARITY_THRESHOLD = 0.6  # Minimum cosine similarity to consider keywords as similar (0.0-1.0)
+
 # Month names for folder naming
 MONTH_NAMES = [
     "01 Jan", "02 Feb", "03 Mar", "04 Apr", "05 May", "06 Jun",

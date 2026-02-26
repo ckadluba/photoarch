@@ -9,11 +9,12 @@ Photo Archive Organizer is a complete Python module/package for automatically or
 ### Key Features
 
 - **AI-Powered Content Analysis**: Uses the BLIP-2 (Bootstrapping Language-Image Pre-training) model to generate captions and keywords for images used locally without cloud access. AI processing happens offline. The model is automatically downloaded on first execution of the module.
+- **Semantic Keyword Comparison**: Uses a Sentence-Transformer model (paraphrase-multilingual-MiniLM-L12-v2) to detect semantically similar keywords for intelligent photo grouping. This allows recognition of related concepts even when exact words differ.
 - **Geolocation Processing**: Extracts GPS coordinates from EXIF data and performs reverse geocoding to determine locations
 - **Intelligent Grouping**: Automatically groups photos into folders based on:
   - Temporal proximity (time between photos)
   - Geographic distance (GPS coordinates)
-  - Content similarity (AI-generated keywords)
+  - Content similarity (semantically similar AI-generated keywords)
 - **Metadata Preservation**: Creates JSON metadata files for each photo with extracted information
 - **Multi-language Support**: Translates AI-generated keywords to German
 - **Structured Output**: Organizes photos in a hierarchical `YYYY/Month/Date-Location-Keywords` folder structure
@@ -176,7 +177,7 @@ Each photo has an accompanying JSON metadata file containing:
    - Same month/year
    - Geographic proximity (within `FOLDER_MAX_DISTANCE_METERS`)
    - Temporal proximity (within `FOLDER_MAX_TIME_DIFFERENCE_HOURS`)
-   - Content similarity (shared keywords)
+   - Content similarity (semantically similar keywords detected by Sentence-Transformer model)
 
 3. **File Organization**: Photos are copied to the output directory with:
    - Hierarchical folder structure (Year/Month/Event)
@@ -189,6 +190,7 @@ You can modify constants in [photoarch/config.py](photoarch/config.py) to custom
 
 - `FOLDER_MAX_DISTANCE_METERS` - Maximum distance for same folder (default: 1500m)
 - `FOLDER_MAX_TIME_DIFFERENCE_HOURS` - Maximum time gap for same folder (default: 3 hours)
+- `SEMANTIC_SIMILARITY_THRESHOLD` - Minimum similarity score for keywords to be considered similar (default: 0.6)
 - `STOPWORDS` - English stopwords to filter from keywords
 - `STOPWORDS_GERMAN` - German stopwords to filter from keywords
 - `FOLDER_FORBIDDEN_CHARS` - Characters to remove from folder names
@@ -203,7 +205,7 @@ The module caches analysis results in `.photoarch/` to speed up repeated runs. D
 - Only `.jpg` images and `.mp4` videos are processed
 - Reverse geocoding uses OpenStreetMap Nominatim API (rate-limited)
 - Keyword translation uses Google Translate API (may be rate-limited)
-- AI analysis of the image happens offline with a downloaded BLIP-2 model
+- AI analysis of the image happens offline with downloaded BLIP-2 and Sentence-Transformer models
 - Original files are **copied**, not moved (originals remain in input directory)
 - The module works with photos and videos from different cameras and phones as long as they contain EXIF data. It was mainly tested with Google Pixel 8 and Samsung Galaxy A15 phones.
 
@@ -213,7 +215,7 @@ The module is organized as follows:
 
 - `photoarch/analysis/`: EXIF reading, AI captioning, file analysis
 - `photoarch/fileops/`: File and folder utilities
-- `photoarch/services/`: Geocoding and language translation
+- `photoarch/services/`: Geocoding, language translation, and semantic similarity
 - `photoarch/config.py`: Configuration constants
 - `photoarch/main.py`: Entry point for CLI and module usage
 
