@@ -25,13 +25,13 @@ class TestExifReader(unittest.TestCase):
         dt = exif_reader.get_date_from_exif_data(exif_data)
         self.assertIsNotNone(dt)
 
-    def test_get_date_from_exif_data_create(self):
-        exif_data_create = "Create Date : 2024:01:01 12:34:56"
-        dt_create = exif_reader.get_date_from_exif_data(exif_data_create)
-        self.assertIsNotNone(dt_create)
+    def test_get_date_from_exif_data_original_without_timezone(self):
+        exif_data_original = "Date/Time Original : 2024:01:01 12:34:56"
+        dt_original = exif_reader.get_date_from_exif_data(exif_data_original)
+        self.assertIsNotNone(dt_original)
 
     def test_get_date_from_exif_data_modify(self):
-        exif_data_modify = "Modify Date : 2024:01:01 12:34:56"
+        exif_data_modify = "File Modification Date/Time : 2024:01:01 12:34:56+02:00"
         dt_modify = exif_reader.get_date_from_exif_data(exif_data_modify)
         self.assertIsNotNone(dt_modify)
 
