@@ -1,5 +1,4 @@
 import logging
-import re
 import json
 from pathlib import Path
 
@@ -8,8 +7,8 @@ from ..models import *
 from ..fileops.file_utils import get_file_modified_datetime, does_filename_meet_criteria
 from .exif_reader import get_exif_data_from_file, get_date_from_exif_data, get_camera_from_exif_data, get_gps_from_exif_data
 from ..services.geocoding import get_address_from_coords
-from ..services.language import translate_english_to_german
 from .ai_captioning import CaptionGenerator
+from .ai_pipeline import build_caption_pipeline, get_keywords_from_caption
 
 
 # Initialization
@@ -19,7 +18,7 @@ OUTPUT_DIR = Path(OUTPUT_DIR_STR)
 CACHE_DIR = Path(CACHE_DIR_STR)
 
 logger = logging.getLogger(__name__)
-_captioner = CaptionGenerator(device="cpu")  # BLIP-2 model for AI captioning (CPU is sufficient for inference, no need for GPU)
+_pipeline = build_caption_pipeline(CaptionGenerator(device="cpu"))  # LangGraph pipeline orchestrating BLIP-2 captioning and translation
 
 
 # Code
@@ -88,14 +87,17 @@ def analyze_file(file_path: Path) -> FileInfo:
 
     # BLIP AI analysis for keywords and caption
     if file_path.suffix.lower() in IMAGE_FILE_EXTENSIONS:
-        caption = _captioner.get_caption_for_image_file(file_path)
-        keywords = get_keywords_from_caption(caption, STOPWORDS)
-        caption_german = translate_english_to_german(caption)
-        keywords_german = get_keywords_from_caption(caption_german, STOPWORDS_GERMAN)
-        file_info.caption = caption
-        file_info.caption_german = caption_german
-        file_info.keywords = keywords
-        file_info.keywords_german = keywords_german
+        result = _pipeline.invoke({
+            "image_path": str(file_path),
+            "caption_en": "",
+            "caption_de": "",
+            "keywords_en": [],
+            "keywords_de": [],
+        })
+        file_info.caption = result["caption_en"]
+        file_info.caption_german = result["caption_de"]
+        file_info.keywords = result["keywords_en"]
+        file_info.keywords_german = result["keywords_de"]
         
     elif file_path.suffix.lower() in VIDEO_FILE_EXTENSIONS:
         file_info.keywords.append(KEYWORD_GENERIC_VIDEO)
@@ -114,11 +116,3 @@ def analyze_file(file_path: Path) -> FileInfo:
 
     return file_info
 
-def get_keywords_from_caption(caption, stopwords) -> list[str]:
-    sanitized_caption = re.sub(FOLDER_FORBIDDEN_CHARS, "", caption)
-    keywords_full = sanitized_caption.split()
-    keywords_no_stopwords = [k for k in keywords_full if k.lower() not in stopwords]
-    keywords_unique = list(dict.fromkeys(keywords_no_stopwords)) 
-    # Sort alphabetically for deterministic output
-    keywords_sorted = sorted(keywords_unique, key=str.lower)
-    return keywords_sorted

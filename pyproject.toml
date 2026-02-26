@@ -19,6 +19,7 @@ dependencies = [
     "torchvision",
     "transformers",
     "sentence-transformers",
+    "langgraph>=1.0.0,<2.0.0",
     "deep-translator",
     "requests",
     "colorlog",
