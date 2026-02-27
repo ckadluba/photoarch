@@ -1,8 +1,8 @@
 from pathlib import Path
 import unittest
 from photoarch.fileops import folder_builder
-from photoarch.models import FolderInfo, FileInfo
-from datetime import datetime
+from photoarch.models import FolderInfo, FileInfo, Address
+from datetime import datetime, timezone, timedelta
 
 class TestFolderBuilder(unittest.TestCase):
     def test_create_folder_info(self):
@@ -71,6 +71,38 @@ class TestFolderBuilder(unittest.TestCase):
         last = FileInfo(path=Path('a.mp4'), date=datetime(2024,1,1,0,0), lat=0.0, lon=0.0, keywords=[KEYWORD_GENERIC_VIDEO], camera_model=None, address=None)
         current = FileInfo(path=Path('b.mp4'), date=datetime(2024,1,1,0,1), lat=0.0, lon=0.0, keywords=["foo"], camera_model=None, address=None)
         self.assertFalse(folder_builder.is_new_folder([last], current))
+
+    def test_is_new_folder_real_world_scenario(self):
+        # Real-world scenario with guinea pig photo and people photo
+        # last_info: 2026-02-01T13:37:03, Neubau (1070), man and woman posing
+        # current_info: 2026-02-01T14:04:58, Liesing (1230), guinea pigs in snow
+        # Time difference: ~27.9 minutes, GPS: ~7.2km, Keywords: completely different
+                
+        last_info = FileInfo(
+            path=Path("PXL_20260201_123703569.jpg"),
+            date=datetime(2026, 2, 1, 13, 37, 3, 569000, tzinfo=timezone(timedelta(hours=1))),
+            lat=48.201975000000004,
+            lon=16.351605555555558,
+            keywords=["man", "photo", "posing", "woman"],
+            camera_model="Pixel 8",
+            address=None
+        )
+
+        current_info = FileInfo(
+            path=Path("PXL_20260201_140458821.jpg"),
+            date=datetime(2026, 2, 1, 14, 4, 58),
+            lat=48.15419722222222,
+            lon=16.307141666666666,
+            keywords=["two", "guinea", "pigs", "laying", "snow", "front", "red", "shed"],
+            camera_model=None,
+            address=None
+        )
+                
+        # Should trigger new folder: different location (~7.2km), different keywords
+        # Time is very close (~27 min), but GPS (0.195 score) + keywords (0.2 score) = 0.395 < 0.6
+        # Therefore should start new folder
+        result = folder_builder.is_new_folder([last_info], current_info)
+        self.assertTrue(result)
 
 if __name__ == '__main__':
     unittest.main()

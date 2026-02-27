@@ -51,30 +51,30 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
         logger.debug(f"is_new_folder: month/year change, last={last_info.date}, current={current_info.date}), start_new_folder=True")  
         return True
 
-    # Calculate time difference score (normalized by threshold, highest weight: 0.5)
+    # Calculate time difference score (normalized by threshold, weight: 0.4)
     last_date, current_date = normalize_datetimes(last_info.date, current_info.date)
     time_delta_hours = abs((current_date - last_date).total_seconds()) / 3600
-    time_score = min(time_delta_hours / FOLDER_MAX_TIME_DIFFERENCE_HOURS, 1.0) * 0.5
+    time_score = min(time_delta_hours / FOLDER_MAX_TIME_DIFFERENCE_HOURS, 1.0) * 0.4
 
-    # Calculate GPS distance score (normalized by threshold, medium weight: 0.3)
+    # Calculate GPS distance score (normalized by threshold, weight: 0.4)
     location_score = 0.0
     location_distance = 0.0
     if last_info.lat is not None and last_info.lon is not None and current_info.lat is not None and current_info.lon is not None:
         last_geo = (last_info.lat, last_info.lon)
         current_geo = (current_info.lat, current_info.lon)
         location_distance = geodesic(last_geo, current_geo).meters
-        location_score = min(location_distance / FOLDER_MAX_DISTANCE_METERS, 1.0) * 0.3
+        location_score = min(location_distance / FOLDER_MAX_DISTANCE_METERS, 1.0) * 0.4
     else:
         logger.debug(f"is_new_folder: missing GPS data, last_info.lat={last_info.lat}, last_info.lon={last_info.lon}, current_info.lat={current_info.lat}, current_info.lon={current_info.lon}, skipping GPS distance check")
      
-    # Calculate keyword difference score (lowest weight: 0.2)
+    # Calculate keyword difference score (lowest weight: 0.3)
     keywords_score = 0.0
     last_keywords = set(last_info.keywords)
     current_keywords = set(current_info.keywords)
     # Special rule: ignore keywords if either file only has KEYWORD_GENERIC_VIDEO
     if last_keywords != {KEYWORD_GENERIC_VIDEO} and current_keywords != {KEYWORD_GENERIC_VIDEO}:
         if keywords_are_different(last_keywords, current_keywords):
-            keywords_score = 1.0 * 0.2
+            keywords_score = 1.0 * 0.3
 
     # Calculate total difference score (max: 1.0)
     difference_score = time_score + location_score + keywords_score
