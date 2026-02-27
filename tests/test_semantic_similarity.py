@@ -1,13 +1,10 @@
 """
 Tests for semantic similarity service.
-
-Note: Use English keywords because semantic comparison should happen before translation.
 """
 
 import unittest
 from photoarch.services.semantic_similarity import (
     word_similarity,
-    has_similar_keyword,
     keywords_are_different
 )
 
@@ -38,60 +35,36 @@ class TestSemanticSimilarity(unittest.TestCase):
         self.assertGreater(similarity1, 0.99)
         self.assertGreater(similarity2, 0.99)
 
-    def test_has_similar_keyword_exact_match(self):
-        """Exact keyword match should return True."""
-        keywords1 = {"car", "street"}
-        keywords2 = {"car", "tree"}
-        self.assertTrue(has_similar_keyword(keywords1, keywords2))
+    def test_keywords_are_different_identical_captions(self):
+        """Identical captions should have difference score close to 0."""
+        score = keywords_are_different("a dog playing in the park", "a dog playing in the park")
+        self.assertLess(score, 0.05)
 
-    def test_has_similar_keyword_semantic_match(self):
-        """Semantically similar keywords should return True."""
-        keywords1 = {"snowy", "street"}
-        keywords2 = {"snow", "sidewalk"}
-        self.assertTrue(has_similar_keyword(keywords1, keywords2))
+    def test_keywords_are_different_similar_captions(self):
+        """Similar captions should have a low difference score."""
+        score = keywords_are_different("a dog playing in the snow", "a puppy running in snow")
+        self.assertLess(score, 0.5)
 
-    def test_has_similar_keyword_no_match(self):
-        """Completely different keywords should return False."""
-        keywords1 = {"computer", "keyboard"}
-        keywords2 = {"beach", "ocean"}
-        result = has_similar_keyword(keywords1, keywords2)
-        self.assertFalse(result)
+    def test_keywords_are_different_different_captions(self):
+        """Very different captions should have a high difference score."""
+        score = keywords_are_different(
+            "a man and a woman posing for a photo on a city street",
+            "two guinea pigs lying in the snow in front of a red shed"
+        )
+        self.assertGreater(score, 0.3)
 
-    def test_has_similar_keyword_empty_sets(self):
-        """Empty keyword sets should return False."""
-        self.assertFalse(has_similar_keyword(set(), {"car"}))
-        self.assertFalse(has_similar_keyword({"car"}, set()))
-        self.assertFalse(has_similar_keyword(set(), set()))
+    def test_keywords_are_different_empty_captions(self):
+        """Empty captions should return 0.0 (cannot determine difference)."""
+        self.assertEqual(keywords_are_different("", ""), 0.0)
+        self.assertEqual(keywords_are_different("some caption", ""), 0.0)
+        self.assertEqual(keywords_are_different("", "some caption"), 0.0)
 
-    def test_keywords_are_different_inverse_of_similar(self):
-        """keywords_are_different should be inverse of has_similar_keyword."""
-        keywords1 = {"car", "street"}
-        keywords2 = {"bicycle", "path"}
-        
-        similar = has_similar_keyword(keywords1, keywords2)
-        different = keywords_are_different(keywords1, keywords2)
-        
-        self.assertEqual(similar, not different)
-
-    def test_keywords_are_different_with_similar_words(self):
-        """Keywords with similar words should not be considered different."""
-        keywords1 = {"snowy", "street"}
-        keywords2 = {"snow", "road"}
-        self.assertFalse(keywords_are_different(keywords1, keywords2))
-
-    def test_has_similar_keyword_custom_threshold(self):
-        """Custom threshold should affect similarity detection."""
-        keywords1 = {"car"}
-        keywords2 = {"vehicle"}  # Semantically related
-        
-        # With high threshold, might not be considered similar
-        result_high = has_similar_keyword(keywords1, keywords2, threshold=0.9)
-        
-        # With low threshold, should be considered similar
-        result_low = has_similar_keyword(keywords1, keywords2, threshold=0.5)
-        
-        # At least the low threshold should find them similar
-        self.assertTrue(result_low)
+    def test_keywords_are_different_returns_float_in_range(self):
+        """keywords_are_different should return a float between 0.0 and 1.0."""
+        score = keywords_are_different("a dog in the park", "a cat on a sofa")
+        self.assertIsInstance(score, float)
+        self.assertGreaterEqual(score, 0.0)
+        self.assertLessEqual(score, 1.0)
 
 
 class TestSemanticSimilarityEnglishWords(unittest.TestCase):

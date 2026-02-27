@@ -34,17 +34,17 @@ class TestFolderBuilder(unittest.TestCase):
         self.assertTrue(folder_builder.is_new_folder([last], current))
 
     def test_is_new_folder_time_and_keywords(self):
-        # Time and keywords differ
-        last = FileInfo(path=Path('a.jpg'), date=datetime(2024,1,1,0,0), lat=0.0, lon=0.0, keywords=["foo"], camera_model=None, address=None)
-        current = FileInfo(path=Path('b.jpg'), date=datetime(2024,1,1,5,0), lat=0.0, lon=0.0, keywords=["bar"], camera_model=None, address=None)
+        # Time and captions differ
+        last = FileInfo(path=Path('a.jpg'), date=datetime(2024,1,1,0,0), lat=0.0, lon=0.0, keywords=["foo"], camera_model=None, address=None, caption="a dog playing in a sunny park")
+        current = FileInfo(path=Path('b.jpg'), date=datetime(2024,1,1,5,0), lat=0.0, lon=0.0, keywords=["bar"], camera_model=None, address=None, caption="a car speeding on the highway at night")
         self.assertTrue(folder_builder.is_new_folder([last], current))
 
     def test_is_new_folder_location_and_keywords(self):
-        # Location and keywords differ - need larger distance to reach 0.6 threshold
-        # GPS distance ~2220km (~2x threshold) = 0.3 score, keywords = 0.2 score, total = 0.5 (below 0.6)
-        # So we add small time difference to reach threshold: 1h = ~0.17 score, total = 0.67
-        last = FileInfo(path=Path('a.jpg'), date=datetime(2024,1,1,0,0), lat=0.0, lon=0.0, keywords=["foo"], camera_model=None, address=None)
-        current = FileInfo(path=Path('b.jpg'), date=datetime(2024,1,1,1,0), lat=10.0, lon=10.0, keywords=["bar"], camera_model=None, address=None)
+        # Location and captions differ - need larger distance to reach 0.6 threshold
+        # GPS distance ~1569km (much larger than threshold) = 0.4 score, time 1h = ~0.13 score,
+        # captions are different so keyword score adds enough to reach threshold
+        last = FileInfo(path=Path('a.jpg'), date=datetime(2024,1,1,0,0), lat=0.0, lon=0.0, keywords=["foo"], camera_model=None, address=None, caption="a dog playing in a sunny park")
+        current = FileInfo(path=Path('b.jpg'), date=datetime(2024,1,1,1,0), lat=10.0, lon=10.0, keywords=["bar"], camera_model=None, address=None, caption="a car speeding on the highway at night")
         self.assertTrue(folder_builder.is_new_folder([last], current))
 
     def test_is_new_folder_only_time_differs(self):
@@ -85,7 +85,8 @@ class TestFolderBuilder(unittest.TestCase):
             lon=16.351605555555558,
             keywords=["man", "photo", "posing", "woman"],
             camera_model="Pixel 8",
-            address=None
+            address=None,
+            caption="a man and a woman posing for a photo on a city street"
         )
 
         current_info = FileInfo(
@@ -95,12 +96,13 @@ class TestFolderBuilder(unittest.TestCase):
             lon=16.307141666666666,
             keywords=["two", "guinea", "pigs", "laying", "snow", "front", "red", "shed"],
             camera_model=None,
-            address=None
+            address=None,
+            caption="two guinea pigs lying in the snow in front of a red shed"
         )
                 
-        # Should trigger new folder: different location (~7.2km), different keywords
-        # Time is very close (~27 min), but GPS (0.195 score) + keywords (0.2 score) = 0.395 < 0.6
-        # Therefore should start new folder
+        # Should trigger new folder: different location (~7.2km) + different captions
+        # Time: ~27.9 min (~0.06 score), GPS: ~7.2km (0.4 score), captions completely different (high keyword score)
+        # Total score exceeds 0.6 threshold
         result = folder_builder.is_new_folder([last_info], current_info)
         self.assertTrue(result)
 

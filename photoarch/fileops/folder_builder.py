@@ -73,8 +73,7 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
     current_keywords = set(current_info.keywords)
     # Special rule: ignore keywords if either file only has KEYWORD_GENERIC_VIDEO
     if last_keywords != {KEYWORD_GENERIC_VIDEO} and current_keywords != {KEYWORD_GENERIC_VIDEO}:
-        if keywords_are_different(last_keywords, current_keywords):
-            keywords_score = 1.0 * 0.3
+        keywords_score = keywords_are_different(last_info.caption, current_info.caption) * 0.3
 
     # Calculate total difference score (max: 1.0)
     difference_score = time_score + location_score + keywords_score

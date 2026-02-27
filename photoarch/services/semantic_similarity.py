@@ -1,13 +1,13 @@
 """
-Semantic similarity service using sentence-transformers for keyword comparison.
-This module provides functions to compare keywords semantically rather than by exact string match.
+Semantic similarity service using sentence-transformers for caption comparison.
+This module provides functions to compare captions semantically using sentence embeddings.
 """
 
 import logging
 from functools import lru_cache
 from sentence_transformers import SentenceTransformer, util
 
-from ..config import SEMANTIC_SIMILARITY_MODEL, SEMANTIC_SIMILARITY_THRESHOLD
+from ..config import SEMANTIC_SIMILARITY_MODEL
 
 
 # Initialization
@@ -47,49 +47,21 @@ def word_similarity(word1: str, word2: str) -> float:
     return similarity
 
 
-def has_similar_keyword(keywords1: set[str], keywords2: set[str], threshold: float = SEMANTIC_SIMILARITY_THRESHOLD) -> bool:
+def keywords_are_different(caption1: str, caption2: str) -> float:
     """
-    Check if any keyword in keywords1 is semantically similar to any keyword in keywords2.
+    Calculate how different two captions are by comparing their sentence embeddings.
     
     Args:
-        keywords1: First set of keywords
-        keywords2: Second set of keywords  
-        threshold: Minimum similarity score to consider words as similar (default from config)
+        caption1: First caption
+        caption2: Second caption
         
     Returns:
-        bool: True if at least one pair of keywords is similar
+        float: Difference score from 0.0 (identical) to 1.0 (completely different).
+               Returns 0.0 if either caption is empty.
     """
-    if not keywords1 or not keywords2:
-        return False
-    
-    # First check for exact matches (fast path)
-    if not keywords1.isdisjoint(keywords2):
-        logger.debug(f"Keywords have exact match: {keywords1 & keywords2}")
-        return True
-    
-    # Check semantic similarity for each pair
-    for kw1 in keywords1:
-        for kw2 in keywords2:
-            similarity = word_similarity(kw1, kw2)
-            if similarity >= threshold:
-                logger.debug(f"Found similar keywords: '{kw1}' ~ '{kw2}' (similarity: {similarity:.3f})")
-                return True
-    
-    logger.debug(f"No similar keywords found between {keywords1} and {keywords2}")
-    return False
-
-
-def keywords_are_different(keywords1: set[str], keywords2: set[str], threshold: float = SEMANTIC_SIMILARITY_THRESHOLD) -> bool:
-    """
-    Check if two keyword sets are semantically different (no similar keywords).
-    This is the inverse of has_similar_keyword.
-    
-    Args:
-        keywords1: First set of keywords
-        keywords2: Second set of keywords
-        threshold: Minimum similarity score to consider words as similar
-        
-    Returns:
-        bool: True if no keyword pair is similar
-    """
-    return not has_similar_keyword(keywords1, keywords2, threshold)
+    if not caption1 or not caption2:
+        return 0.0
+    emb1 = get_embedding(caption1.lower())
+    emb2 = get_embedding(caption2.lower())
+    similarity = util.cos_sim(emb1, emb2).item()
+    return max(0.0, 1.0 - similarity)
