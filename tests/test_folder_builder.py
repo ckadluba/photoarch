@@ -40,9 +40,11 @@ class TestFolderBuilder(unittest.TestCase):
         self.assertTrue(folder_builder.is_new_folder([last], current))
 
     def test_is_new_folder_location_and_keywords(self):
-        # Location and keywords differ
+        # Location and keywords differ - need larger distance to reach 0.6 threshold
+        # GPS distance ~2220km (~2x threshold) = 0.3 score, keywords = 0.2 score, total = 0.5 (below 0.6)
+        # So we add small time difference to reach threshold: 1h = ~0.17 score, total = 0.67
         last = FileInfo(path=Path('a.jpg'), date=datetime(2024,1,1,0,0), lat=0.0, lon=0.0, keywords=["foo"], camera_model=None, address=None)
-        current = FileInfo(path=Path('b.jpg'), date=datetime(2024,1,1,0,1), lat=10.0, lon=10.0, keywords=["bar"], camera_model=None, address=None)
+        current = FileInfo(path=Path('b.jpg'), date=datetime(2024,1,1,1,0), lat=10.0, lon=10.0, keywords=["bar"], camera_model=None, address=None)
         self.assertTrue(folder_builder.is_new_folder([last], current))
 
     def test_is_new_folder_only_time_differs(self):

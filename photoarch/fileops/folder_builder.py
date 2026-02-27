@@ -31,13 +31,13 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
     
          1. Always start a new folder if no previous files exist
          2. Start a new folder if the month or year changed
-         3. Start a new folder if at least two of the following criteria differ:
-             3.1 GPS distance > FOLDER_MAX_DISTANCE_METERS
-             3.2 Time difference > FOLDER_MAX_TIME_DIFFERENCE_HOURS
-             3.3 All keywords are different
-             3.3.1 If the current or the last file has only KEYWORD_GENERIC_VIDEO as a keyword, 
-                   consider keywords as not different, since videos often have no meaningful keywords 
-                   from the AI analysis and would otherwise cause too many folder splits."""
+         3. Start a new folder based on weighted difference score:
+             - Time difference (highest weight)
+             - GPS distance (medium weight)
+             - Keyword difference (lowest weight)
+             3.1 If the current or the last file has only KEYWORD_GENERIC_VIDEO as a keyword, 
+                 keywords are not considered in the score, since videos often have no meaningful keywords 
+                 from the AI analysis and would otherwise cause too many folder splits."""
 
     if file_infos is None or len(file_infos) == 0:
         return True 
@@ -51,33 +51,37 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
         logger.debug(f"is_new_folder: month/year change, last={last_info.date}, current={current_info.date}), start_new_folder=True")  
         return True
 
-    # Check time difference
-    time_changed = False
+    # Calculate time difference score (normalized by threshold, highest weight: 0.5)
     last_date, current_date = normalize_datetimes(last_info.date, current_info.date)
-    time_delta = abs((current_date - last_date).total_seconds()) / 3600
-    time_changed = time_delta > FOLDER_MAX_TIME_DIFFERENCE_HOURS
+    time_delta_hours = abs((current_date - last_date).total_seconds()) / 3600
+    time_score = min(time_delta_hours / FOLDER_MAX_TIME_DIFFERENCE_HOURS, 1.0) * 0.5
 
-    # Check GPS distance
-    location_changed = False
+    # Calculate GPS distance score (normalized by threshold, medium weight: 0.3)
+    location_score = 0.0
     location_distance = 0.0
     if last_info.lat is not None and last_info.lon is not None and current_info.lat is not None and current_info.lon is not None:
         last_geo = (last_info.lat, last_info.lon)
         current_geo = (current_info.lat, current_info.lon)
         location_distance = geodesic(last_geo, current_geo).meters
-        location_changed = location_distance > FOLDER_MAX_DISTANCE_METERS
+        location_score = min(location_distance / FOLDER_MAX_DISTANCE_METERS, 1.0) * 0.3
     else:
         logger.debug(f"is_new_folder: missing GPS data, last_info.lat={last_info.lat}, last_info.lon={last_info.lon}, current_info.lat={current_info.lat}, current_info.lon={current_info.lon}, skipping GPS distance check")
      
-    # Check if keywords differ significantly (semantic similarity check)
-    keywords_changed = False
+    # Calculate keyword difference score (lowest weight: 0.2)
+    keywords_score = 0.0
     last_keywords = set(last_info.keywords)
     current_keywords = set(current_info.keywords)
-    keywords_changed = (last_keywords != {KEYWORD_GENERIC_VIDEO} and current_keywords != {KEYWORD_GENERIC_VIDEO}) \
-        and keywords_are_different(last_keywords, current_keywords)
+    # Special rule: ignore keywords if either file only has KEYWORD_GENERIC_VIDEO
+    if last_keywords != {KEYWORD_GENERIC_VIDEO} and current_keywords != {KEYWORD_GENERIC_VIDEO}:
+        if keywords_are_different(last_keywords, current_keywords):
+            keywords_score = 1.0 * 0.2
 
-    # Return true to start new folder if at least two criteria differ
-    start_new_folder = sum([time_changed, location_changed, keywords_changed]) >= 2
-    logger.debug(f"is_new_folder: decision, time_delta={time_delta:.2f}h (time_changed={time_changed}), location_distance={location_distance:.2f}m (location_changed={location_changed}), keyword_difference={keywords_changed}, start_new_folder={start_new_folder}")  
+    # Calculate total difference score (max: 1.0)
+    difference_score = time_score + location_score + keywords_score
+    
+    # Start new folder if difference score >= 0.6 (roughly equivalent to "2 of 3" criteria)
+    start_new_folder = difference_score >= 0.6
+    logger.debug(f"is_new_folder: decision, time_delta={time_delta_hours:.2f}h (score={time_score:.2f}), location_distance={location_distance:.2f}m (score={location_score:.2f}), keyword_difference (score={keywords_score:.2f}), total_difference_score={difference_score:.2f}, start_new_folder={start_new_folder}")  
 
     return start_new_folder
 
