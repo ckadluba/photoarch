@@ -6,7 +6,7 @@ from geopy.distance import geodesic
 
 from ..config import *
 from ..models import *
-from ..services.semantic_similarity import keywords_are_different
+from ..services.semantic_similarity import calculate_caption_difference
 
 
 # Initialization
@@ -68,20 +68,20 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
         logger.debug(f"is_new_folder: missing GPS data, last_info.lat={last_info.lat}, last_info.lon={last_info.lon}, current_info.lat={current_info.lat}, current_info.lon={current_info.lon}, skipping GPS distance check")
      
     # Calculate keyword difference score (lowest weight: 0.3)
-    keywords_score = 0.0
+    caption_score = 0.0
     last_keywords = set(last_info.keywords)
     current_keywords = set(current_info.keywords)
     # Special rule: ignore keywords if either file only has KEYWORD_GENERIC_VIDEO
     if last_keywords != {KEYWORD_GENERIC_VIDEO} and current_keywords != {KEYWORD_GENERIC_VIDEO}:
-        keywords_score = keywords_are_different(last_info.caption, current_info.caption) * 0.3
+        caption_score = calculate_caption_difference(last_info.caption, current_info.caption) * 0.3
 
     # Calculate total difference score (max: 1.0)
-    difference_score = time_score + location_score + keywords_score
+    difference_score = time_score + location_score + caption_score
     
     # Start new folder if difference score >= 0.6 (roughly equivalent to "2 of 3" criteria)
     start_new_folder = difference_score >= 0.6
-    logger.debug(f"is_new_folder: decision, time_delta={time_delta_hours:.2f}h (score={time_score:.2f}), location_distance={location_distance:.2f}m (score={location_score:.2f}), keyword_difference (score={keywords_score:.2f}), total_difference_score={difference_score:.2f}, start_new_folder={start_new_folder}")  
-
+    logger.debug(f"is_new_folder: decision, time_delta={time_delta_hours:.2f}h (score={time_score:.2f}), location_distance={location_distance:.2f}m (score={location_score:.2f}), caption difference (score={caption_score:.2f}), total_difference_score={difference_score:.2f}, start_new_folder={start_new_folder}")  
+    
     return start_new_folder
 
 def normalize_datetimes(dt1, dt2):

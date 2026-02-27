@@ -26,28 +26,13 @@ def get_model() -> SentenceTransformer:
         logger.info("Semantic similarity model loaded successfully")
     return _model
 
-
 @lru_cache(maxsize=1000)
 def get_embedding(word: str):
     """Get embedding for a word with caching for performance."""
     model = get_model()
     return model.encode(word, convert_to_tensor=True)
 
-
-def word_similarity(word1: str, word2: str) -> float:
-    """
-    Calculate semantic similarity between two words.
-    
-    Returns:
-        float: Cosine similarity score between 0.0 and 1.0
-    """
-    emb1 = get_embedding(word1.lower())
-    emb2 = get_embedding(word2.lower())
-    similarity = util.cos_sim(emb1, emb2).item()
-    return similarity
-
-
-def keywords_are_different(caption1: str, caption2: str) -> float:
+def calculate_caption_difference(caption1: str, caption2: str) -> float:
     """
     Calculate how different two captions are by comparing their sentence embeddings.
     
@@ -64,4 +49,5 @@ def keywords_are_different(caption1: str, caption2: str) -> float:
     emb1 = get_embedding(caption1.lower())
     emb2 = get_embedding(caption2.lower())
     similarity = util.cos_sim(emb1, emb2).item()
-    return max(0.0, 1.0 - similarity)
+    return max(0.0, 1.0 - (1.0 + similarity) / 2.0)  # Convert similarity (-1.0 to 1.0) to difference (0.0 to 1.0)
+    
