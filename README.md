@@ -9,12 +9,12 @@ Photo Archive Organizer is a complete Python module/package for automatically or
 ### Key Features
 
 - **AI-Powered Content Analysis**: Uses the BLIP-2 (Bootstrapping Language-Image Pre-training) model to generate captions and keywords for images used locally without cloud access. AI processing happens offline. The model is automatically downloaded on first execution of the module.
-- **Semantic Keyword Comparison**: Uses a Sentence-Transformer model (paraphrase-multilingual-MiniLM-L12-v2) to detect semantically similar keywords for intelligent photo grouping. This allows recognition of related concepts even when exact words differ.
+- **Semantic Caption Comparison**: Uses a Sentence-Transformer model (paraphrase-multilingual-MiniLM-L12-v2) to detect semantically similar image captions for intelligent photo grouping. This allows recognition of related concepts even when exact words differ.
 - **Geolocation Processing**: Extracts GPS coordinates from EXIF data and performs reverse geocoding to determine locations
 - **Intelligent Grouping**: Automatically groups photos into folders based on:
   - Temporal proximity (time between photos)
   - Geographic distance (GPS coordinates)
-  - Content similarity (semantically similar AI-generated keywords)
+  - Content similarity (semantically similar AI-generated captions)
 - **Metadata Preservation**: Creates JSON metadata files for each photo with extracted information
 - **Multi-language Support**: Translates AI-generated keywords to German
 - **Structured Output**: Organizes photos in a hierarchical `YYYY/Month/Date-Location-Keywords` folder structure
@@ -172,13 +172,13 @@ Each photo has an accompanying JSON metadata file containing:
    - Timestamp (from EXIF or file modification date)
    - GPS coordinates (from EXIF data)
    - Location name (reverse geocoding via OpenStreetMap)
-   - Content keywords (AI-generated via offline BLIP-2 model)
+   - Image captions (AI-generated via offline BLIP-2 model)
 
 2. **Folder Grouping**: Photos are grouped into folders based on:
    - Same month/year
    - Geographic proximity (within `FOLDER_MAX_DISTANCE_METERS`)
    - Temporal proximity (within `FOLDER_MAX_TIME_DIFFERENCE_HOURS`)
-   - Content similarity (semantically similar keywords detected by Sentence-Transformer model)
+   - Content similarity (semantically similar captions detected by Sentence-Transformer model)
 
 3. **File Organization**: Photos are copied to the output directory with:
    - Hierarchical folder structure (Year/Month/Event)

@@ -34,9 +34,9 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
          3. Start a new folder based on weighted difference score:
              - Time difference (highest weight)
              - GPS distance (medium weight)
-             - Keyword difference (lowest weight)
+             - Caption difference (lowest weight)
              3.1 If the current or the last file has only KEYWORD_GENERIC_VIDEO as a keyword, 
-                 keywords are not considered in the score, since videos often have no meaningful keywords 
+                 captions are not considered in the score, since videos often have no meaningful captions 
                  from the AI analysis and would otherwise cause too many folder splits."""
 
     if file_infos is None or len(file_infos) == 0:
