@@ -49,5 +49,6 @@ def calculate_caption_difference(caption1: str, caption2: str) -> float:
     emb1 = get_embedding(caption1.lower())
     emb2 = get_embedding(caption2.lower())
     similarity = util.cos_sim(emb1, emb2).item()
-    return max(0.0, 1.0 - (1.0 + similarity) / 2.0)  # Convert similarity (-1.0 to 1.0) to difference (0.0 to 1.0)
+    difference = 1.0 - (1.0 + similarity) / 2.0  # Convert similarity (-1.0 to 1.0) to difference (0.0 to 1.0)
+    return difference
     

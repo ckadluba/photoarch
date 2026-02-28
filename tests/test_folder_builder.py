@@ -35,8 +35,8 @@ class TestFolderBuilder(unittest.TestCase):
 
     def test_is_new_folder_time_and_keywords(self):
         # Time and captions differ
-        last = FileInfo(path=Path('a.jpg'), date=datetime(2024,1,1,0,0), lat=0.0, lon=0.0, keywords=["foo"], camera_model=None, address=None, caption="a dog playing in a sunny park")
-        current = FileInfo(path=Path('b.jpg'), date=datetime(2024,1,1,5,0), lat=0.0, lon=0.0, keywords=["bar"], camera_model=None, address=None, caption="a car speeding on the highway at night")
+        last = FileInfo(path=Path('a.jpg'), date=datetime(2024,1,1,0,0), lat=0.0, lon=0.0, keywords=["foo"], camera_model=None, address=None, caption="a man and a woman posing for a photo on a city street")
+        current = FileInfo(path=Path('b.jpg'), date=datetime(2024,1,1,5,0), lat=0.01, lon=0.01, keywords=["bar"], camera_model=None, address=None, caption="mathematical equations")
         self.assertTrue(folder_builder.is_new_folder([last], current))
 
     def test_is_new_folder_location_and_keywords(self):

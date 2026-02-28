@@ -51,19 +51,19 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
         logger.debug(f"is_new_folder: month/year change, last={last_info.date}, current={current_info.date}), start_new_folder=True")  
         return True
 
-    # Calculate time difference score (normalized by threshold, weight: 0.4)
+    # Calculate time difference score (normalized by threshold, weight: 0.35)
     last_date, current_date = normalize_datetimes(last_info.date, current_info.date)
     time_delta_hours = abs((current_date - last_date).total_seconds()) / 3600
-    time_score = min(time_delta_hours / FOLDER_MAX_TIME_DIFFERENCE_HOURS, 1.0) * 0.4
+    time_score = min(time_delta_hours / FOLDER_MAX_TIME_DIFFERENCE_HOURS, 1.0) * 0.35
 
-    # Calculate GPS distance score (normalized by threshold, weight: 0.4)
+    # Calculate GPS distance score (normalized by threshold, weight: 0.35)
     location_score = 0.0
     location_distance = 0.0
     if last_info.lat is not None and last_info.lon is not None and current_info.lat is not None and current_info.lon is not None:
         last_geo = (last_info.lat, last_info.lon)
         current_geo = (current_info.lat, current_info.lon)
         location_distance = geodesic(last_geo, current_geo).meters
-        location_score = min(location_distance / FOLDER_MAX_DISTANCE_METERS, 1.0) * 0.4
+        location_score = min(location_distance / FOLDER_MAX_DISTANCE_METERS, 1.0) * 0.35
     else:
         logger.debug(f"is_new_folder: missing GPS data, last_info.lat={last_info.lat}, last_info.lon={last_info.lon}, current_info.lat={current_info.lat}, current_info.lon={current_info.lon}, skipping GPS distance check")
      
