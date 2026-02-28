@@ -190,8 +190,8 @@ Each photo has an accompanying JSON metadata file containing:
 You can modify constants in [photoarch/config.py](photoarch/config.py) to customize behavior:
 
 - `FOLDER_MAX_DISTANCE_METERS` - Maximum distance for same folder (default: 1500m)
-- `FOLDER_MAX_TIME_DIFFERENCE_HOURS` - Maximum time gap for same folder (default: 3 hours)
-- `SEMANTIC_SIMILARITY_THRESHOLD` - Minimum similarity score for keywords to be considered similar (default: 0.6)
+- `FOLDER_MAX_TIME_DIFFERENCE_HOURS` - Maximum time gap for same folder (default: 2 hours)
+- `FOLDER_MAX_DIFFERENCE_SCORE_THRESHOLD` - Maximum overall difference score (default: 0.6)
 - `STOPWORDS` - English stopwords to filter from keywords
 - `STOPWORDS_GERMAN` - German stopwords to filter from keywords
 - `FOLDER_FORBIDDEN_CHARS` - Characters to remove from folder names

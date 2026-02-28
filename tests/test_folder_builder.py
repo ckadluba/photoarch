@@ -83,20 +83,14 @@ class TestFolderBuilder(unittest.TestCase):
             date=datetime(2026, 2, 1, 13, 37, 3, 569000, tzinfo=timezone(timedelta(hours=1))),
             lat=48.201975000000004,
             lon=16.351605555555558,
-            keywords=["man", "photo", "posing", "woman"],
-            camera_model="Pixel 8",
-            address=None,
             caption="a man and a woman posing for a photo on a city street"
         )
 
         current_info = FileInfo(
             path=Path("PXL_20260201_140458821.jpg"),
-            date=datetime(2026, 2, 1, 14, 4, 58),
+            date=datetime(2026, 2, 1, 14, 4, 58, 821000, tzinfo=timezone(timedelta(hours=1))),
             lat=48.15419722222222,
             lon=16.307141666666666,
-            keywords=["two", "guinea", "pigs", "laying", "snow", "front", "red", "shed"],
-            camera_model=None,
-            address=None,
             caption="two guinea pigs lying in the snow in front of a red shed"
         )
                 

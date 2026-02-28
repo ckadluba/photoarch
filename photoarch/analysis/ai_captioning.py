@@ -23,13 +23,13 @@ class CaptionGenerator:
         if self._model is None:
             logger.info("Loading BLIP-2 Model (CPU) …")
             self._processor = Blip2Processor.from_pretrained(
-                MODEL_NAME,
+                IMAGE_CAPTIONING_MODEL_NAME,
                 cache_dir=MODEL_CACHE_DIR,
                 use_fast=True
             )
 
             self._model = Blip2ForConditionalGeneration.from_pretrained(
-                MODEL_NAME,
+                IMAGE_CAPTIONING_MODEL_NAME,
                 cache_dir=MODEL_CACHE_DIR,
                 dtype=torch.float32
             )

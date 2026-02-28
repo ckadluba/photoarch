@@ -7,7 +7,8 @@ IMAGE_FILE_EXTENSIONS = {".jpg" }
 VIDEO_FILE_EXTENSIONS = {".mp4"}
 
 # Model paths
-MODEL_NAME = "Salesforce/blip2-flan-t5-xl"
+IMAGE_CAPTIONING_MODEL_NAME = "Salesforce/blip2-flan-t5-xl"
+SEMANTIC_SIMILARITY_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
 MODEL_CACHE_DIR = "./models"
 
 # English stopwords for keyword generation
@@ -44,13 +45,11 @@ KEYWORD_GENERIC_VIDEO = "Video"  # Generic keyword for videos without meaningful
 # OpenStreetMap Nominatim URL
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse"
 
+# Foldering heuristics thresholds
 FOLDER_MAX_DISTANCE_METERS = 1500  # Maximum distance in meters to consider photos as belonging to the same folder
-FOLDER_MAX_TIME_DIFFERENCE_HOURS = 3  # Maximum time difference in hours to consider photos as belonging to the same folder
+FOLDER_MAX_TIME_DIFFERENCE_HOURS = 2  # Maximum time difference in hours to consider photos as belonging to the same folder
+FOLDER_MAX_DIFFERENCE_SCORE_THRESHOLD = 0.58  # Maximum difference score before starting a new folder (0.0-1.0)
 FOLDER_FORBIDDEN_CHARS = r'[:/\\"\'<>&|.,;„“]' # Characters not used in folder names
-
-# Semantic similarity settings
-SEMANTIC_SIMILARITY_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"  # Multilingual model for German keyword comparison
-SEMANTIC_SIMILARITY_THRESHOLD = 0.6  # Minimum cosine similarity to consider keywords as similar (0.0-1.0)
 
 # Month names for folder naming
 MONTH_NAMES = [
