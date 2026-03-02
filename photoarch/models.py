@@ -93,3 +93,7 @@ class FileInfo:
         default=False,
         metadata=config(exclude=lambda _: True)
     )
+    analysis_duration: float = field(
+        default=0.0,
+        metadata=config(exclude=lambda _: True)
+    )

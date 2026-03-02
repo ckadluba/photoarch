@@ -1,7 +1,7 @@
 import logging
 import shutil
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 import argparse
 
 from .config import *
@@ -37,7 +37,13 @@ def main(input_dir: str, output_dir: str, input_files_order: str):
     for file_info in files:
         # Analyze the file
         datetime_start = datetime.now()
-        logger.info(f"Analyzing file ({len(file_infos) + 1}/{len(files)}) {file_info.name} …")
+
+        # Estimate remaining time based on average analysis duration of processed files
+        average_time_per_file = sum(f.analysis_duration for f in file_infos) / len(file_infos) if file_infos else 0
+        remaining_files = len(files) - len(file_infos)
+        eta = remaining_files * average_time_per_file
+        eta_timedelta = timedelta(seconds=eta)
+        logger.info(f"Analyzing file {file_info.name} ({len(file_infos) + 1}/{len(files)}), ETA: {eta_timedelta} …")
 
         file_info = analyze_file(file_info)
         if file_info.skip:
@@ -45,7 +51,8 @@ def main(input_dir: str, output_dir: str, input_files_order: str):
 
         # Print elapsed time for analysis
         elapsed_time = datetime.now() - datetime_start
-        logger.info(f"Analysis took {elapsed_time.total_seconds():.1f} seconds")
+        file_info.analysis_duration = elapsed_time.total_seconds()
+        logger.info(f"Analysis took {file_info.analysis_duration:.1f} seconds")
 
         # Create a new folder and finish the previous one if the file is different enough
         if is_new_folder(file_infos, file_info):
