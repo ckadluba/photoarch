@@ -3,7 +3,7 @@ Tests for semantic similarity service.
 """
 
 import unittest
-from photoarch.services.semantic_similarity import (
+from photoarch.analysis.semantic_similarity import (
     calculate_caption_difference
 )
 

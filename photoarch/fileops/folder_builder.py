@@ -6,7 +6,7 @@ from geopy.distance import geodesic
 
 from ..config import *
 from ..models import *
-from ..services.semantic_similarity import calculate_caption_difference
+from ..analysis.semantic_similarity import calculate_caption_difference
 
 
 # Initialization
