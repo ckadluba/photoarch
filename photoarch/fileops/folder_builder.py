@@ -93,7 +93,7 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
     
     # Start new folder if difference score >= threshold (roughly equivalent to "2 of 3" criteria)
     start_new_folder = difference_score >= FOLDER_MAX_DIFFERENCE_SCORE_THRESHOLD
-    logger.debug(f"is_new_folder: decision, time_delta={time_delta_hours:.2f}h (score={time_score:.2f}), location_distance={location_distance:.2f}m (score={location_score:.2f}), caption difference={caption_difference:.2f} (score={caption_difference_score:.2f}), total_difference_score={difference_score:.2f}, start_new_folder={start_new_folder}")  
+    logger.debug(f"is_new_folder: decision, time_diff={time_delta_hours:.2f}h (sc={time_score:.2f}, wh={TIME_WEIGHT:.2f}), geo_diff={location_distance:.2f}m (sc={location_score:.2f}, wh={LOCATION_WEIGHT:.2f}), caption_diff={caption_difference:.2f} (sc={caption_difference_score:.2f}, wh={CAPTION_WEIGHT:.2f}), total_score={difference_score:.2f}, start_new_folder={start_new_folder}")  
     
     return start_new_folder
 
