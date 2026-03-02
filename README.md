@@ -120,20 +120,20 @@ The module creates a hierarchical folder structure:
 sorted_photos/
 ├── 2025/
 │   ├── 01 Jan/
-│   │   ├── 2025-01-15T1430 - 15T1645 Berlin Brandenburger Tor Tourist Landmark/
+│   │   ├── 2025-01-15T1430 - 15T1645 Berlin Brandenburger Tor Touristen Sehenswürdigkeit/
 │   │   │   ├── metadata/
 │   │   │   │   ├── PXL_20250115_143052.json
 │   │   │   │   └── PXL_20250115_164532.json
 │   │   │   ├── PXL_20250115_143052.jpg
 │   │   │   └── PXL_20250115_164532.jpg
-│   │   └── 2025-01-20T0915 Munich Park Fountain/
+│   │   └── 2025-01-20T0915 München Park Springbrunnen/
 │   │       ├── metadata/
 │   │       │   └── PXL_20250120_091523.json
 │   │       │   └── PXL_20250120_101422.json
 │   │       └── PXL_20250120_091523.jpg
 │   │       └── PXL_20250120_101422.mp4
 │   └── 02 Feb/
-│       └── 2025-02-03T1200 Hamburg Harbor/
+│       └── 2025-02-03T1200 Hamburg Hafen/
 │           ├── metadata/
 │           │   └── PXL_20250203_120045.json
 │           └── PXL_20250203_120045.jpg
@@ -160,7 +160,7 @@ Each photo has an accompanying JSON metadata file containing:
     "countryCode": "de"
   },
   "keywords": ["gate", "landmark", "building", "sky"],
-  "keywordsGerman": ["Tor", "Sehenswürdigkeit", "Gittertäben", "Himmel"],
+  "keywordsGerman": ["Tor", "Sehenswürdigkeit", "Gitterstäben", "Himmel"],
   "caption": "a large gate with columns and a sky background",
   "captionGerman": "ein großes Tor mit Gittertäben und Himmel"
 }
@@ -191,7 +191,7 @@ You can modify constants in [photoarch/config.py](photoarch/config.py) to custom
 
 - `FOLDER_MAX_DISTANCE_METERS` - Maximum distance for same folder (default: 1500m)
 - `FOLDER_MAX_TIME_DIFFERENCE_HOURS` - Maximum time gap for same folder (default: 2 hours)
-- `FOLDER_MAX_DIFFERENCE_SCORE_THRESHOLD` - Maximum overall difference score (default: 0.6)
+- `FOLDER_MAX_DIFFERENCE_SCORE_THRESHOLD` - Maximum overall difference score (default: 0.58)
 - `STOPWORDS` - English stopwords to filter from keywords
 - `STOPWORDS_GERMAN` - German stopwords to filter from keywords
 - `FOLDER_FORBIDDEN_CHARS` - Characters to remove from folder names
