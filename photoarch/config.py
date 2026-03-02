@@ -3,7 +3,7 @@
 INPUT_DIR_STR = "./input_photos"
 OUTPUT_DIR_STR = "./sorted_photos"
 CACHE_DIR_STR = ".photoarch"
-IMAGE_FILE_EXTENSIONS = {".jpg" }
+IMAGE_FILE_EXTENSIONS = {".jpg", ".png" }
 VIDEO_FILE_EXTENSIONS = {".mp4"}
 
 # Model paths
