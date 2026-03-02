@@ -34,16 +34,15 @@ def main(input_dir: str, output_dir: str, input_files_order: str):
 
     file_infos: list[FileInfo] = []
     folder_infos: list[FolderInfo] = []
+    last_analysis_duration_seconds = 0.0
     for file_info in files:
         # Analyze the file
         datetime_start = datetime.now()
 
-        # Estimate remaining time based on average analysis duration of processed files
-        average_time_per_file = sum(f.analysis_duration for f in file_infos) / len(file_infos) if file_infos else 0
+        # Estimate remaining time based on last analysis duration
         remaining_files = len(files) - len(file_infos)
-        eta = remaining_files * average_time_per_file
-        eta_timedelta = timedelta(seconds=eta)
-        logger.info(f"Analyzing file {file_info.name} ({len(file_infos) + 1}/{len(files)}), ETA: {eta_timedelta} …")
+        eta_seconds = remaining_files * last_analysis_duration_seconds
+        logger.info(f"Analyzing file {file_info.name} ({len(file_infos) + 1}/{len(files)}), ETA: {timedelta(seconds=eta_seconds)} …")
 
         file_info = analyze_file(file_info)
         if file_info.skip:
@@ -51,8 +50,8 @@ def main(input_dir: str, output_dir: str, input_files_order: str):
 
         # Print elapsed time for analysis
         elapsed_time = datetime.now() - datetime_start
-        file_info.analysis_duration = elapsed_time.total_seconds()
-        logger.info(f"Analysis took {file_info.analysis_duration:.1f} seconds")
+        last_analysis_duration_seconds = elapsed_time.total_seconds()
+        logger.info(f"Analysis took {last_analysis_duration_seconds:.1f} seconds")
 
         # Create a new folder and finish the previous one if the file is different enough
         if is_new_folder(file_infos, file_info):
