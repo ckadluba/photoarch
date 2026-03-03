@@ -38,6 +38,11 @@ jobs:
       run: |
         pip install -e .[dev]
         
+    - name: Verify module installation
+      run: |
+        python -c "import photoarch; print('photoarch module imported successfully')"
+        python -m photoarch.main --help
+        
     - name: Run tests with pytest
       run: |
         pytest -v --log-cli-level=INFO tests/
