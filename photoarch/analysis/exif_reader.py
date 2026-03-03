@@ -47,6 +47,12 @@ def get_date_from_exif_data(exif_data: str) -> datetime | None:
         date_str = match_date_time_original_no_tz.group(1)
         return datetime.strptime(date_str, "%Y:%m:%d %H:%M:%S")
 
+    match_create_date = re.search(r"Create Date\s*:\s*(\d{4}:\d{2}:\d{2} \d{2}:\d{2}:\d{2})", exif_data)
+    if match_create_date:
+        date_str = match_create_date.group(1)
+        return datetime.strptime(date_str, "%Y:%m:%d %H:%M:%S")
+
+    # Fallback of last resort: use file modification date/time
     match_file_modification_date_time = re.search(r"File Modification Date/Time\s*:\s*(\d{4}:\d{2}:\d{2} \d{2}:\d{2}:\d{2}\+\d{2}:\d{2})", exif_data)
     if match_file_modification_date_time:
         date_str = match_file_modification_date_time.group(1)
