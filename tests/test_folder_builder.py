@@ -100,5 +100,81 @@ class TestFolderBuilder(unittest.TestCase):
         result = folder_builder.is_new_folder([last_info], current_info)
         self.assertTrue(result)
 
+    def test_finish_last_folder_info_aggregates_most_common_place(self):
+        """Test that finish_last_folder_info() correctly sets folder_info.place to the most common address"""
+        import tempfile
+        
+        # Create test addresses
+        address_vienna = Address(name="Vienna")
+        address_wien = Address(name="Wien")
+        address_salzburg = Address(name="Salzburg")
+        
+        # Create file infos with different addresses
+        file1 = FileInfo(
+            path=Path("file1.jpg"),
+            date=datetime(2024, 1, 1, 10, 0),
+            lat=48.2,
+            lon=16.3,
+            keywords=["Park"],
+            camera_model="Canon",
+            address=address_vienna,
+            caption="A park in Vienna"
+        )
+        
+        file2 = FileInfo(
+            path=Path("file2.jpg"),
+            date=datetime(2024, 1, 1, 11, 0),
+            lat=48.2,
+            lon=16.3,
+            keywords=["Building"],
+            camera_model="Canon",
+            address=address_wien,  # Case variant of Vienna
+            caption="A building in Wien"
+        )
+        
+        file3 = FileInfo(
+            path=Path("file3.jpg"),
+            date=datetime(2024, 1, 1, 12, 0),
+            lat=47.8,
+            lon=13.0,
+            keywords=["Mountain"],
+            camera_model="Canon",
+            address=address_salzburg,
+            caption="A mountain in Salzburg"
+        )
+        
+        # Last file in the folder (file_infos list)
+        last_file = FileInfo(
+            path=Path("file4.jpg"),
+            date=datetime(2024, 1, 1, 13, 0),
+            lat=48.2,
+            lon=16.3,
+            keywords=["Street"],
+            camera_model="Canon",
+            address=address_vienna,  # Vienna appears 3 times total
+            caption="A street in Vienna"
+        )
+        
+        # Create folder info with files
+        folder_info = FolderInfo(
+            start_date=datetime(2024, 1, 1, 10, 0),
+            end_date=None,
+            place=None,
+            keywords_german=set(),
+            files=[file1, file2, file3]
+        )
+        
+        # Call finish_last_folder_info
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_dir = Path(tmpdir)
+            result = folder_builder.finish_last_folder_info([folder_info], [last_file], output_dir)
+        
+        # Assert that the function returned True
+        self.assertTrue(result)
+        
+        # Assert that the most common place (Vienna/Wien) is selected
+        self.assertEqual(folder_info.place, "Vienna")  # "Vienna" appears most frequently and should be preserved
+
 if __name__ == '__main__':
     unittest.main()
+

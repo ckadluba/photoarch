@@ -1,8 +1,8 @@
-from collections import Counter
 import logging
 import re
 from pathlib import Path
 from geopy.distance import geodesic
+from photoarch.fileops.keyword_reducer import select_top_words
 
 from ..config import *
 from ..models import *
@@ -116,24 +116,18 @@ def finish_last_folder_info(folder_infos: list[FolderInfo], file_infos: list[Fil
     folder_info.end_date = file_info.date
 
     # Aggregate places (use only top 1 most common)
-    place_counter = Counter()
-    for f in folder_info.files:
-        if f.address and f.address.name:
-            place_counter.update([f.address.name])
+    places_all_files = [f.address.name for f in folder_info.files if f.address and f.address.name]
     if file_info.address and file_info.address.name:
-        place_counter.update([file_info.address.name])
-    if place_counter:
-        folder_info.place = place_counter.most_common(1)[0][0]
+        places_all_files.append(file_info.address.name)
+    top_places = select_top_words(places_all_files, top_n=1)
+    folder_info.place = top_places[0] if top_places else None
 
     # Aggregate keywords (use only top 7 most common)
-    keyword_counter = Counter()
-    for f in folder_info.files:
-        if f.keywords_german:
-            keyword_counter.update(k for k in f.keywords_german if k)
-
+    keywords_all_files = [k for f in folder_info.files if f.keywords_german for k in f.keywords_german if k]    
     if file_info.keywords_german:
-        keyword_counter.update(k for k in file_info.keywords_german if k)
-    folder_info.keywords_german = {k for k, _ in keyword_counter.most_common(7)}
+        keywords_all_files.extend([k for k in file_info.keywords_german if k])
+    top_unique_keywords = select_top_words(keywords_all_files, top_n=7)
+    folder_info.keywords_german = set(top_unique_keywords)
 
     sanitize_folder_info(folder_info)
     create_folder_name(folder_info, output_dir)
