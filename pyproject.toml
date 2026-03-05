@@ -23,7 +23,8 @@ dependencies = [
     "requests",
     "colorlog",
     "geopy",
-    "dataclasses-json"
+    "dataclasses-json",
+    "numpy"
 ]
 
 [project.optional-dependencies]

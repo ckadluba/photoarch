@@ -122,11 +122,11 @@ def finish_last_folder_info(folder_infos: list[FolderInfo], file_infos: list[Fil
     top_places = select_top_words(places_all_files, top_n=1)
     folder_info.place = top_places[0] if top_places else None
 
-    # Aggregate keywords (use only top 7 most common)
+    # Aggregate keywords (use only top FOLDER_NAME_KEYWORDS most common)
     keywords_all_files = [k for f in folder_info.files if f.keywords_german for k in f.keywords_german if k]    
     if file_info.keywords_german:
         keywords_all_files.extend([k for k in file_info.keywords_german if k])
-    top_unique_keywords = select_top_words(keywords_all_files, top_n=7)
+    top_unique_keywords = select_top_words(keywords_all_files, top_n=FOLDER_NAME_KEYWORDS)
     folder_info.keywords_german = set(top_unique_keywords)
 
     sanitize_folder_info(folder_info)

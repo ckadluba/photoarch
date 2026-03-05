@@ -50,6 +50,7 @@ FOLDER_MAX_DISTANCE_METERS = 1500  # Maximum distance in meters to consider phot
 FOLDER_MAX_TIME_DIFFERENCE_HOURS = 2  # Maximum time difference in hours to consider photos as belonging to the same folder
 FOLDER_MAX_DIFFERENCE_SCORE_THRESHOLD = 0.58  # Maximum difference score before starting a new folder (0.0-1.0)
 FOLDER_FORBIDDEN_CHARS = r'[:/\\"\'<>&|.,;„“]' # Characters not used in folder names
+FOLDER_NAME_KEYWORDS = 10  # Number of keywords to include in folder names
 
 # Month names for folder naming
 MONTH_NAMES = [

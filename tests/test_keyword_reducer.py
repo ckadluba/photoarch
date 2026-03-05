@@ -40,7 +40,7 @@ class TestKeywordReducer(unittest.TestCase):
     
     def test_top_n_limit(self):
         """Test that only top_n keywords are returned"""
-        keywords = ["A", "B", "C", "D", "E", "F", "G", "H"]
+        keywords = ["Auto", "Haus", "Baum", "Garten", "Weg", "See", "Berg", "Wald"]
         result = select_top_words(keywords, top_n=3)
         self.assertEqual(len(result), 3)
     
@@ -72,12 +72,42 @@ class TestKeywordReducer(unittest.TestCase):
         self.assertTrue(any(w.lower() == "vogel" for w in result))
         self.assertIn("Fisch", result)
     
-    def test_default_top_n(self):
-        """Test that default top_n is 7"""
-        keywords = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
-        result = select_top_words(keywords)
-        self.assertEqual(len(result), 7)
-
+    def test_frequency_not_alphabetical_order(self):
+        """Test that results are sorted by frequency, not alphabetically"""
+        # Words in reverse alphabetical order but increasing frequency
+        keywords = [
+            "Zebra", "Zebra", "Zebra", "Zebra", "Zebra",
+            "Yacht", "Yacht", "Yacht", "Yacht",
+            "Wolke", "Wolke", "Wolke",
+            "Baum", "Baum",
+            "Apfel"
+        ]
+        result = select_top_words(keywords, top_n=5)
+        # Should be ordered by frequency: Zebra (5), Yacht (4), Wolke (3), Baum (2), Apfel (1)
+        # NOT alphabetically: Apfel, Baum, Wolke, Yacht, Zebra
+        self.assertEqual(result[0], "Zebra")
+        self.assertEqual(result[1], "Yacht")
+        self.assertEqual(result[2], "Wolke")
+        self.assertEqual(result[3], "Baum")
+        self.assertEqual(result[4], "Apfel")
+    
+    def test_returns_exactly_ten_keywords(self):
+        """Test that exactly 10 keywords are returned when top_n=10"""
+        keywords = [
+            "Apfel", "Apfel", "Apfel", "Apfel", "Apfel",
+            "Baum", "Baum", "Baum", "Baum",
+            "Chameleon", "Chameleon", "Chameleon",
+            "Drache", "Drache",
+            "Elefant",
+            "Farnkraut",
+            "Giraffe",
+            "Haus",
+            "Igel",
+            "Jäger",
+            "Känguru"
+        ]
+        result = select_top_words(keywords, top_n=10)
+        self.assertEqual(len(result), 10)
 
 if __name__ == '__main__':
     unittest.main()

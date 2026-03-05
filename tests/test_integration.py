@@ -50,8 +50,8 @@ def test_photoarch_process_photo_folder(clean_output):
     # Check the photo folders are created with correct names
     photo_folders = list(month_folder.iterdir())
     assert len(photo_folders) == 2, "More or less than exactly two photo folders were created"
-    photo_folder_1 = next((p for p in photo_folders if p.name == "2025-07-08T0753 Veranstaltungszentrum Wien blaue daran Gemälde Licht Mannes Trompete Tür"), None)
-    photo_folder_2 = next((p for p in photo_folders if p.name == "2025-07-08T1158 Allianz Wien Bier Flasche neben Sandwich steht Tisch"), None)
+    photo_folder_1 = next((p for p in photo_folders if p.name == "2025-07-08T0753 Veranstaltungszentrum Wien blaue Gemälde Licht Mannes Trompete"), None)
+    photo_folder_2 = next((p for p in photo_folders if p.name == "2025-07-08T1158 Allianz Wien Bier Flasche Sandwich Tisch"), None)
     assert photo_folder_1 is not None, "Photo folder 1 was not found"
     assert photo_folder_1.is_dir(), "Photo folder 1 is not a directory"
     assert photo_folder_2 is not None, "Photo folder 2 was not found"
