@@ -20,12 +20,27 @@ logger = logging.getLogger(__name__)
 def get_exif_data_from_file(path: Path) -> str | None:
     ensure_exiftool_available()
 
-    result = subprocess.run(
-        ["exiftool", path],
-        stdout=subprocess.PIPE,
-        text=True
-    )
-    return result.stdout if result.returncode == 0 else None
+    try:
+        result = subprocess.run(
+            ["exiftool", str(path)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=10,
+            check=True
+        )
+        return result.stdout
+
+    except subprocess.TimeoutExpired as e:
+        logger.error(f"ExifTool timeout after 10s for file: {path}")
+        raise RuntimeError(f"ExifTool timeout for {path}") from e
+
+    except subprocess.CalledProcessError as e:
+        logger.error(
+            f"ExifTool failed for file {path} with exit code {e.returncode}: "
+            f"{(e.stderr or '').strip()}"
+        )
+        raise RuntimeError(f"ExifTool failed for {path}") from e
 
 def ensure_exiftool_available():
     if not shutil.which("exiftool"):
