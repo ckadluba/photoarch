@@ -2,11 +2,11 @@ import logging
 import re
 from pathlib import Path
 from geopy.distance import geodesic
-from photoarch.fileops.keyword_reducer import select_top_words
 
 from ..config import *
 from ..models import *
-from ..analysis.semantic_similarity import calculate_caption_difference
+from ..language.caption_comparer import calculate_caption_difference
+from ..language.keyword_reducer import select_top_words
 
 
 # Initialization

@@ -1,5 +1,5 @@
 import unittest
-from photoarch.fileops.keyword_reducer import select_top_words
+from photoarch.language.keyword_reducer import select_top_words
 
 
 class TestKeywordReducer(unittest.TestCase):

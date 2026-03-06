@@ -1,11 +1,6 @@
-"""
-Tests for semantic similarity service.
-"""
-
 import unittest
-from photoarch.analysis.semantic_similarity import (
-    calculate_caption_difference
-)
+from photoarch.language.caption_comparer import calculate_caption_difference
+
 
 class TestSemanticSimilarity(unittest.TestCase):
     """Test cases for semantic similarity functions."""

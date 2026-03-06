@@ -6,9 +6,9 @@ from pathlib import Path
 from ..config import *
 from ..models import *
 from ..fileops.file_utils import get_file_modified_datetime, does_filename_meet_criteria
-from .exif_reader import get_exif_data_from_file, get_date_from_exif_data, get_camera_from_exif_data, get_gps_from_exif_data
 from ..services.geocoding import get_address_from_coords
-from ..services.language import translate_english_to_german
+from ..services.translate import translate_english_to_german
+from .exif_reader import get_exif_data_from_file, get_date_from_exif_data, get_camera_from_exif_data, get_gps_from_exif_data
 from .ai_captioning import CaptionGenerator
 
 
