@@ -1,6 +1,9 @@
 from collections import Counter
 import numpy as np
+from re import sub
 from sentence_transformers import SentenceTransformer
+
+from ..config import FOLDER_FORBIDDEN_CHARS
 
 
 # Initialization
@@ -57,6 +60,7 @@ def cluster_words(words, embeddings, similarity_threshold=0.75):
 def select_top_words(keywords, top_n):
     """
     Cleans a list of keywords:
+    - Clean special characters that are not allowed in folder names
     - Remove duplicates (case-insensitive)
     - Merge semantically similar words
     - Select top-N most frequent words
@@ -70,17 +74,19 @@ def select_top_words(keywords, top_n):
     if not keywords:
         return []
 
+    # Clean special characters
+    folder_sanitized_keywords = [sub(FOLDER_FORBIDDEN_CHARS, "", k) for k in keywords]
+
     # Track original variants
     word_variants = {}
-    for word in keywords:
+    for word in folder_sanitized_keywords:
         lower = word.lower()
         if lower not in word_variants:
             word_variants[lower] = []
         word_variants[lower].append(word)
 
     # Count frequencies
-    lowercase_counts = Counter([w.lower() for w in keywords])
-
+    lowercase_counts = Counter([w.lower() for w in folder_sanitized_keywords])
     unique_words = list(lowercase_counts.keys())
 
     # Generate embeddings

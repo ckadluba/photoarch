@@ -1,5 +1,4 @@
 import logging
-import re
 import json
 from pathlib import Path
 
@@ -8,6 +7,7 @@ from ..models import *
 from ..fileops.file_utils import get_file_modified_datetime, does_filename_meet_criteria
 from ..services.geocoding import get_address_from_coords
 from ..services.translate import translate_english_to_german
+from ..language.keyword_generator import get_keywords_from_caption
 from .exif_reader import get_exif_data_from_file, get_date_from_exif_data, get_camera_from_exif_data, get_gps_from_exif_data
 from .ai_captioning import CaptionGenerator
 
@@ -113,12 +113,3 @@ def analyze_file(file_path: Path) -> FileInfo:
     )
 
     return file_info
-
-def get_keywords_from_caption(caption, stopwords) -> list[str]:
-    sanitized_caption = re.sub(FOLDER_FORBIDDEN_CHARS, "", caption)
-    keywords_full = sanitized_caption.split()
-    keywords_no_stopwords = [k for k in keywords_full if k.lower() not in stopwords]
-    keywords_unique = list(dict.fromkeys(keywords_no_stopwords)) 
-    # Sort alphabetically for deterministic output
-    keywords_sorted = sorted(keywords_unique, key=str.lower)
-    return keywords_sorted
