@@ -2,7 +2,7 @@ import unittest
 from photoarch.language.caption_comparer import calculate_caption_difference
 
 
-class TestSemanticSimilarity(unittest.TestCase):
+class TestCaptionComparer(unittest.TestCase):
     """Test cases for semantic similarity functions."""
 
     def test_captions_are_different_identical_captions(self):
