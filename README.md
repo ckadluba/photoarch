@@ -111,6 +111,7 @@ main.run(input_dir="/path/to/photos", output_dir="/path/to/sorted")
 - `--input` - Input directory containing photos (default: `input_photos`)
 - `--output` - Output directory for sorted photos (default: `sorted_photos`)
 - `--input-files-order` - Order to process input files: `filename` or `modified-date` (default: `filename`)
+- `--dry-run` - Analyze photos and print the result folder tree without copying any files
 
 ### Output Structure
 
