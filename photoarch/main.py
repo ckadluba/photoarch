@@ -4,8 +4,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 import argparse
 
-from .config import *
-from .models import *
+from .models import FolderInfo, FileInfo
 from .logging_config import setup_logging
 from .analysis.file_analyzer import CACHE_DIR, INPUT_DIR, OUTPUT_DIR, analyze_file
 from .fileops.folder_builder import create_folder_info, is_new_folder, finish_last_folder_info

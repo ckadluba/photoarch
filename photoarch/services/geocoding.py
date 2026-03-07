@@ -1,8 +1,8 @@
 import logging
 import requests
 
-from ..config import *
-from ..models import *
+from ..config import NOMINATIM_URL
+from ..models import Address
 
 
 # Initialization

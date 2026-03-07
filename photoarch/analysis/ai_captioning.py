@@ -3,7 +3,7 @@ from PIL import Image
 import torch
 from transformers import Blip2Processor, Blip2ForConditionalGeneration
 
-from ..config import *
+from ..config import IMAGE_CAPTIONING_MODEL_NAME, MODEL_CACHE_DIR
 
 
 # Initialization

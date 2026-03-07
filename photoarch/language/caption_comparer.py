@@ -1,13 +1,8 @@
-"""
-Semantic similarity service using sentence-transformers for caption comparison.
-This module provides functions to compare captions semantically using sentence embeddings.
-"""
-
 import logging
 from functools import lru_cache
 from sentence_transformers import SentenceTransformer, util
 
-from ..config import SEMANTIC_SIMILARITY_MODEL
+from ..config import SEMANTIC_SIMILARITY_MODEL_NAME
 
 
 # Initialization
@@ -21,8 +16,8 @@ def get_model() -> SentenceTransformer:
     """Lazy-load the sentence transformer model (singleton pattern)."""
     global _model
     if _model is None:
-        logger.info(f"Loading semantic similarity model: {SEMANTIC_SIMILARITY_MODEL}")
-        _model = SentenceTransformer(SEMANTIC_SIMILARITY_MODEL)
+        logger.info(f"Loading semantic similarity model: {SEMANTIC_SIMILARITY_MODEL_NAME}")
+        _model = SentenceTransformer(SEMANTIC_SIMILARITY_MODEL_NAME)
         logger.info("Semantic similarity model loaded successfully")
     return _model
 

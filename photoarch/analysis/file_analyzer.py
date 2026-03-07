@@ -2,8 +2,12 @@ import logging
 import json
 from pathlib import Path
 
-from ..config import *
-from ..models import *
+from ..config import (
+    INPUT_DIR_STR, OUTPUT_DIR_STR, CACHE_DIR_STR,
+    IMAGE_FILE_EXTENSIONS, VIDEO_FILE_EXTENSIONS,
+    STOPWORDS, STOPWORDS_GERMAN, KEYWORD_GENERIC_VIDEO
+)
+from ..models import FileInfo
 from ..fileops.file_utils import get_file_modified_datetime, does_filename_meet_criteria
 from ..services.geocoding import get_address_from_coords
 from ..services.translate import translate_english_to_german

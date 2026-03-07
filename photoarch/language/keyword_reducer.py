@@ -3,7 +3,7 @@ import numpy as np
 from re import sub
 from sentence_transformers import SentenceTransformer
 
-from ..config import FOLDER_FORBIDDEN_CHARS
+from ..config import FOLDER_FORBIDDEN_CHARS, SEMANTIC_SIMILARITY_MODEL_NAME
 
 
 # Initialization
@@ -19,7 +19,7 @@ def get_model():
     """
     global _model
     if _model is None:
-        _model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
+        _model = SentenceTransformer(SEMANTIC_SIMILARITY_MODEL_NAME)
     return _model
 
 

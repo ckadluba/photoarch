@@ -2,9 +2,10 @@ import logging
 import re
 from pathlib import Path
 from geopy.distance import geodesic
+from datetime import datetime
 
 from ..config import *
-from ..models import *
+from ..models import FolderInfo, FileInfo
 from ..language.caption_comparer import calculate_caption_difference
 from ..language.keyword_reducer import select_top_words
 
@@ -52,20 +53,19 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
         return True
 
     # Set weights for each criterion (must sum to 1.0)
-    if last_info.lat is not None and last_info.lon is not None and current_info.lat is not None and current_info.lon is not None:
-        TIME_WEIGHT = 0.39
-        LOCATION_WEIGHT = 0.39
-        CAPTION_WEIGHT = 0.22
-    else:
-        # If GPS data is missing, increase the weight of time and caption criteria
-        TIME_WEIGHT = 0.62
-        LOCATION_WEIGHT = 0.0
-        CAPTION_WEIGHT = 0.38
+    time_weight = FILE_DIFF_SCORE_TIME_WEIGHT
+    location_weight = FILE_DIFF_SCORE_LOCATION_WEIGHT
+    caption_weight = FILE_DIFF_SCORE_CAPTION_WEIGHT
+    if last_info.lat is None or last_info.lon is None or current_info.lat is None or current_info.lon is None:
+        # If GPS data is missing, use other weights
+        time_weight = FILE_DIFF_SCORE_TIME_WEIGHT_NO_GPS
+        location_weight = FILE_DIFF_SCORE_LOCATION_WEIGHT_NO_GPS
+        caption_weight = FILE_DIFF_SCORE_CAPTION_WEIGHT_NO_GPS
 
     # Calculate time difference score (normalized by threshold, weight: 0.39)
     last_date, current_date = normalize_datetimes(last_info.date, current_info.date)
     time_delta_hours = abs((current_date - last_date).total_seconds()) / 3600
-    time_score = min(time_delta_hours / FOLDER_MAX_TIME_DIFFERENCE_HOURS, 1.0) * TIME_WEIGHT
+    time_score = min(time_delta_hours / FOLDER_MAX_TIME_DIFFERENCE_HOURS, 1.0) * time_weight
 
     # Calculate GPS distance score (normalized by threshold, weight: 0.39)
     location_distance = 0.0
@@ -74,7 +74,7 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
         last_geo = (last_info.lat, last_info.lon)
         current_geo = (current_info.lat, current_info.lon)
         location_distance = geodesic(last_geo, current_geo).meters
-        location_score = min(location_distance / FOLDER_MAX_DISTANCE_METERS, 1.0) * LOCATION_WEIGHT
+        location_score = min(location_distance / FOLDER_MAX_DISTANCE_METERS, 1.0) * location_weight
     else:
         logger.debug(f"is_new_folder: missing GPS data, last_info.lat={last_info.lat}, last_info.lon={last_info.lon}, current_info.lat={current_info.lat}, current_info.lon={current_info.lon}, skipping GPS distance check")
      
@@ -86,14 +86,14 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
     # Special rule: ignore keywords if either file only has KEYWORD_GENERIC_VIDEO
     if last_keywords != {KEYWORD_GENERIC_VIDEO} and current_keywords != {KEYWORD_GENERIC_VIDEO}:
         caption_difference = calculate_caption_difference(last_info.caption, current_info.caption)
-        caption_difference_score = caption_difference * CAPTION_WEIGHT
+        caption_difference_score = caption_difference * caption_weight
 
     # Calculate total difference score (max: 1.0)
     difference_score = time_score + location_score + caption_difference_score
     
     # Start new folder if difference score >= threshold (roughly equivalent to "2 of 3" criteria)
     start_new_folder = difference_score >= FOLDER_MAX_DIFFERENCE_SCORE_THRESHOLD
-    logger.debug(f"is_new_folder: decision, time_diff={time_delta_hours:.2f}h (sc={time_score:.2f}, wh={TIME_WEIGHT:.2f}), geo_diff={location_distance:.2f}m (sc={location_score:.2f}, wh={LOCATION_WEIGHT:.2f}), caption_diff={caption_difference:.2f} (sc={caption_difference_score:.2f}, wh={CAPTION_WEIGHT:.2f}), total_score={difference_score:.2f}, start_new_folder={start_new_folder}")  
+    logger.debug(f"is_new_folder: decision, time_diff={time_delta_hours:.2f}h (sc={time_score:.2f}, wh={time_weight:.2f}), geo_diff={location_distance:.2f}m (sc={location_score:.2f}, wh={location_weight:.2f}), caption_diff={caption_difference:.2f} (sc={caption_difference_score:.2f}, wh={caption_weight:.2f}), total_score={difference_score:.2f}, start_new_folder={start_new_folder}")  
     
     return start_new_folder
 

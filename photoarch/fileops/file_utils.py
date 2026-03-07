@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 from datetime import datetime
 
-from ..config import *
+from ..config import IMAGE_FILE_EXTENSIONS, VIDEO_FILE_EXTENSIONS
 
 
 # Initialization
