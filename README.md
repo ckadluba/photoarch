@@ -214,14 +214,29 @@ The module caches analysis results in `.photoarch/` to speed up repeated runs. D
 
 The module is organized as follows:
 
-- `photoarch/analysis/`: EXIF reading, AI captioning, file analysis
-- `photoarch/fileops/`: File and folder utilities
-- `photoarch/services/`: Geocoding, language translation, and semantic similarity
-- `photoarch/config.py`: Configuration constants
-- `photoarch/main.py`: Entry point for CLI and module usage
+```
+photoarch/
+├── config.py                # Configuration constants
+├── logging_config.py        # Logging setup
+├── main.py                  # Entry point for CLI and module usage
+├── models.py                # Shared data model classes
+├── analysis/
+│   ├── ai_captioning.py     # AI caption generation (BLIP-2 model)
+│   ├── exif_reader.py       # EXIF metadata extraction
+│   └── file_analyzer.py     # Orchestrates per-file analysis
+├── fileops/
+│   ├── file_utils.py        # File copy and path utilities
+│   └── folder_builder.py    # Output folder creation and naming
+├── language/
+│   ├── caption_comparer.py  # Semantic caption similarity (Sentence-Transformer)
+│   ├── keyword_generator.py # Keyword extraction from captions
+│   └── keyword_reducer.py   # Deduplication and filtering of keywords
+└── services/
+    ├── geocoding.py         # Reverse geocoding via OpenStreetMap Nominatim
+    └── translate.py         # Keyword translation via Google Translate
+```
 
 ## Extending the Module
-
 
 You can add your own analysis, file operations, or services by creating new modules in the respective subfolders and importing them in your scripts.
 
@@ -246,4 +261,5 @@ Test input files should be placed in `tests/data/input/` as required by the inte
 ## License
 
 Apache License 2.0 - See LICENSE file for details
+
 Christian Kadluba 2026
