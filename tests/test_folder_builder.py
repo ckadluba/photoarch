@@ -205,10 +205,7 @@ class TestFolderBuilder(unittest.TestCase):
             folder_builder.finish_last_folder_info([folder_info], [last_file], Path(tmpdir), folder_name_language="german")
 
         folder_name = folder_info.path.name
-        self.assertIn("Garten", folder_name)
-        self.assertIn("Natur", folder_name)
-        self.assertNotIn("Park", folder_name)
-        self.assertNotIn("Nature", folder_name)
+        self.assertEqual("2024-01-01T1000 Garten Natur", folder_name)
 
     def test_finish_last_folder_info_english_name(self):
         """Test that finish_last_folder_info() with language='english' builds folder name from keywords"""
@@ -239,10 +236,7 @@ class TestFolderBuilder(unittest.TestCase):
             folder_builder.finish_last_folder_info([folder_info], [last_file], Path(tmpdir), folder_name_language="english")
 
         folder_name = folder_info.path.name
-        self.assertIn("Park", folder_name)
-        self.assertIn("Nature", folder_name)
-        self.assertNotIn("Garten", folder_name)
-        self.assertNotIn("Natur", folder_name)
+        self.assertEqual("2024-01-01T1000 Nature Park", folder_name)
 
 if __name__ == '__main__':
     unittest.main()
