@@ -160,6 +160,7 @@ class TestFolderBuilder(unittest.TestCase):
             start_date=datetime(2024, 1, 1, 10, 0),
             end_date=None,
             place=None,
+            keywords=set(),
             keywords_german=set(),
             files=[file1, file2, file3]
         )
@@ -174,6 +175,74 @@ class TestFolderBuilder(unittest.TestCase):
         
         # Assert that the most common place (Vienna/Wien) is selected
         self.assertEqual(folder_info.place, "Vienna")  # "Vienna" appears most frequently and should be preserved
+
+    def test_finish_last_folder_info_german_name(self):
+        """Test that finish_last_folder_info() with language='german' builds folder name from keywords_german"""
+        import tempfile
+
+        file1 = FileInfo(
+            path=Path("file1.jpg"),
+            date=datetime(2024, 1, 1, 10, 0),
+            keywords=["Park", "Nature"],
+            keywords_german=["Garten", "Natur"],
+        )
+        last_file = FileInfo(
+            path=Path("file2.jpg"),
+            date=datetime(2024, 1, 1, 11, 0),
+            keywords=["Park", "Nature"],
+            keywords_german=["Garten", "Natur"],
+        )
+        folder_info = FolderInfo(
+            start_date=datetime(2024, 1, 1, 10, 0),
+            end_date=None,
+            place=None,
+            keywords=set(),
+            keywords_german=set(),
+            files=[file1]
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            folder_builder.finish_last_folder_info([folder_info], [last_file], Path(tmpdir), folder_name_language="german")
+
+        folder_name = folder_info.path.name
+        self.assertIn("Garten", folder_name)
+        self.assertIn("Natur", folder_name)
+        self.assertNotIn("Park", folder_name)
+        self.assertNotIn("Nature", folder_name)
+
+    def test_finish_last_folder_info_english_name(self):
+        """Test that finish_last_folder_info() with language='english' builds folder name from keywords"""
+        import tempfile
+
+        file1 = FileInfo(
+            path=Path("file1.jpg"),
+            date=datetime(2024, 1, 1, 10, 0),
+            keywords=["Park", "Nature"],
+            keywords_german=["Garten", "Natur"],
+        )
+        last_file = FileInfo(
+            path=Path("file2.jpg"),
+            date=datetime(2024, 1, 1, 11, 0),
+            keywords=["Park", "Nature"],
+            keywords_german=["Garten", "Natur"],
+        )
+        folder_info = FolderInfo(
+            start_date=datetime(2024, 1, 1, 10, 0),
+            end_date=None,
+            place=None,
+            keywords=set(),
+            keywords_german=set(),
+            files=[file1]
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            folder_builder.finish_last_folder_info([folder_info], [last_file], Path(tmpdir), folder_name_language="english")
+
+        folder_name = folder_info.path.name
+        self.assertIn("Park", folder_name)
+        self.assertIn("Nature", folder_name)
+        self.assertNotIn("Garten", folder_name)
+        self.assertNotIn("Natur", folder_name)
 
 if __name__ == '__main__':
     unittest.main()
