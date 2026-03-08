@@ -112,6 +112,7 @@ main.run(input_dir="/path/to/photos", output_dir="/path/to/sorted")
 - `--output` - Output directory for sorted photos (default: `sorted_photos`)
 - `--input-files-order` - Order to process input files: `filename` or `modified-date` (default: `filename`)
 - `--dry-run` - Analyze photos and print the result folder tree without copying any files
+- `--folder-name-language` - Language used for keywords in folder names: `german` or `english` (default: `german`). This only affects folder names — metadata JSON files always contain both the original English and translated German keywords and captions regardless of this setting.
 
 ### Output Structure
 

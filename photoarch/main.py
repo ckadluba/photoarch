@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 # Code
 
-def main(input_dir: str, output_dir: str, input_files_order: str, dry_run: bool = False):
+def main(input_dir: str, output_dir: str, input_files_order: str, dry_run: bool = False, folder_name_language: str = "german"):
     input_path = Path(input_dir)
     output_path = Path(output_dir)
 
@@ -25,13 +25,13 @@ def main(input_dir: str, output_dir: str, input_files_order: str, dry_run: bool 
         logger.error(f"Input directory {input_path} does not exist or is not a directory.")
         return
 
-    folder_infos = analyze_files(input_path, output_path, input_files_order)
+    folder_infos = analyze_files(input_path, output_path, input_files_order, folder_name_language)
     copy_files(folder_infos, input_path, output_path, dry_run)
 
     logger.info("Finished.")
 
 
-def analyze_files(input_path: Path, output_path: Path, input_files_order: str) -> list[FolderInfo]:
+def analyze_files(input_path: Path, output_path: Path, input_files_order: str, folder_name_language: str = "german") -> list[FolderInfo]:
     logger.info(f"Analyzing files in {input_path} …")
     if input_files_order == "filename":
         files = sorted(input_path.iterdir(), key=lambda f: f.name)
@@ -61,7 +61,7 @@ def analyze_files(input_path: Path, output_path: Path, input_files_order: str) -
 
         # Create a new folder and finish the previous one if the file is different enough
         if is_new_folder(file_infos, file_info):
-            finish_last_folder_info(folder_infos, file_infos, output_path)
+            finish_last_folder_info(folder_infos, file_infos, output_path, folder_name_language)
             assert file_info.date is not None  # Date is guaranteed to be set for non-skipped files
             create_folder_info(folder_infos, file_info.date)
 
@@ -69,7 +69,7 @@ def analyze_files(input_path: Path, output_path: Path, input_files_order: str) -
         folder_infos[-1].files.append(file_info)
 
     # Finish the last folder
-    finish_last_folder_info(folder_infos, file_infos, output_path)
+    finish_last_folder_info(folder_infos, file_infos, output_path, folder_name_language)
 
     return folder_infos
 
@@ -119,10 +119,16 @@ def cli():
         default=False,
         help="Analyze and show the result tree without copying any files",
     )
+    parser.add_argument(
+        "--folder-name-language",
+        default="german",
+        choices=["german", "english"],
+        help="Language used for keywords in folder names (default: german)",
+    )
     args = parser.parse_args()
 
     setup_logging(args.log_level)
-    main(args.input, args.output, input_files_order=args.input_files_order, dry_run=args.dry_run)
+    main(args.input, args.output, input_files_order=args.input_files_order, dry_run=args.dry_run, folder_name_language=args.folder_name_language)
 
 if __name__ == "__main__":
     cli()

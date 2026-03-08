@@ -22,6 +22,7 @@ def create_folder_info(folder_infos: list[FolderInfo], start_date: datetime):
         start_date = start_date,
         end_date=None,
         place=None,
+        keywords=set(),
         keywords_german=set(),
         files=[]
     )
@@ -106,7 +107,7 @@ def normalize_datetimes(dt1, dt2):
 
     return dt1, dt2
 
-def finish_last_folder_info(folder_infos: list[FolderInfo], file_infos: list[FileInfo], output_dir: Path) -> bool:
+def finish_last_folder_info(folder_infos: list[FolderInfo], file_infos: list[FileInfo], output_dir: Path, folder_name_language: str = "german") -> bool:
     if len(folder_infos) == 0 or len(file_infos) == 0:
         return False
     
@@ -122,15 +123,22 @@ def finish_last_folder_info(folder_infos: list[FolderInfo], file_infos: list[Fil
     top_places = select_top_words(places_all_files, top_n=1)
     folder_info.place = top_places[0] if top_places else None
 
-    # Aggregate keywords (use only top FOLDER_NAME_KEYWORDS most common)
+    # Aggregate German keywords (use only top FOLDER_NAME_KEYWORDS most common)
     keywords_all_files = [k for f in folder_info.files if f.keywords_german for k in f.keywords_german if k]    
     if file_info.keywords_german:
         keywords_all_files.extend([k for k in file_info.keywords_german if k])
     top_unique_keywords = select_top_words(keywords_all_files, top_n=FOLDER_NAME_KEYWORDS)
     folder_info.keywords_german = set(top_unique_keywords)
 
+    # Aggregate English keywords (use only top FOLDER_NAME_KEYWORDS most common)
+    keywords_all_files_english = [k for f in folder_info.files if f.keywords for k in f.keywords if k]
+    if file_info.keywords:
+        keywords_all_files_english.extend([k for k in file_info.keywords if k])
+    top_unique_keywords_english = select_top_words(keywords_all_files_english, top_n=FOLDER_NAME_KEYWORDS)
+    folder_info.keywords = set(top_unique_keywords_english)
+
     sanitize_folder_info(folder_info)
-    create_folder_name(folder_info, output_dir)
+    create_folder_name(folder_info, output_dir, folder_name_language)
 
     logger.debug(f"finish_last_folder_info: folder_info.path.name={folder_info.path.name if folder_info.path else 'None'}") 
 
@@ -150,12 +158,18 @@ def sanitize_folder_info(folder_info):
     if folder_info.keywords_german:
         folder_info.keywords_german = [sanitize_for_folder_name(k) for k in folder_info.keywords_german]
 
-def create_folder_name(folder_info, output_dir: Path):
+    if folder_info.keywords:
+        folder_info.keywords = [sanitize_for_folder_name(k) for k in folder_info.keywords]
+
+def create_folder_name(folder_info, output_dir: Path, folder_name_language: str = "german"):
     assert folder_info.end_date is not None  # Folder end_date will not be None at this point 
     folder_name: str = f"{folder_info.start_date.strftime('%Y-%m-%dT%H%M')}"
     folder_name += f"{' - ' + folder_info.end_date.strftime('%dT%H%M') if folder_info.end_date.day != folder_info.start_date.day else ''}"
     folder_name += f"{' ' + folder_info.place if folder_info.place is not None else ''}"
-    folder_name += f"{' ' + ' '.join(sorted(folder_info.keywords_german, key=str.lower)) if folder_info.keywords_german else ''}"
+    if folder_name_language == "english":
+        folder_name += f"{' ' + ' '.join(sorted(folder_info.keywords, key=str.lower)) if folder_info.keywords else ''}"
+    else:
+        folder_name += f"{' ' + ' '.join(sorted(folder_info.keywords_german, key=str.lower)) if folder_info.keywords_german else ''}"
     
     folder_info.path = output_dir 
     folder_info.path /= str(folder_info.start_date.year)

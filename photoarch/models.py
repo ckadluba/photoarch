@@ -49,6 +49,7 @@ class FolderInfo:
     start_date: datetime
     end_date: Optional[datetime]
     place: Optional[str]
+    keywords: set[str]
     keywords_german: set[str]
     files: list[FileInfo]
     path: Optional[Path] = None
