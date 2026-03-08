@@ -238,6 +238,72 @@ class TestFolderBuilder(unittest.TestCase):
         folder_name = folder_info.path.name
         self.assertEqual("2024-01-01T1000 Nature Park", folder_name)
 
+    def test_finish_last_folder_info_german_name_filters_forbidden_chars(self):
+        """Test that finish_last_folder_info() removes FOLDER_FORBIDDEN_CHARS from german keywords in folder name"""
+        import tempfile
+
+        file1 = FileInfo(
+            path=Path("file1.jpg"),
+            date=datetime(2024, 1, 1, 10, 0),
+            keywords=["Park"],
+            keywords_german=["Garten & Natur"],  # & is a forbidden char
+        )
+        last_file = FileInfo(
+            path=Path("file2.jpg"),
+            date=datetime(2024, 1, 1, 11, 0),
+            keywords=["Park"],
+            keywords_german=["Garten & Natur"],
+        )
+        folder_info = FolderInfo(
+            start_date=datetime(2024, 1, 1, 10, 0),
+            end_date=None,
+            place=None,
+            keywords=set(),
+            keywords_german=set(),
+            files=[file1]
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            folder_builder.finish_last_folder_info([folder_info], [last_file], Path(tmpdir), folder_name_language="german")
+
+        folder_name = folder_info.path.name
+        self.assertNotIn("&", folder_name)
+        self.assertIn("Garten", folder_name)
+        self.assertIn("Natur", folder_name)
+
+    def test_finish_last_folder_info_english_name_filters_forbidden_chars(self):
+        """Test that finish_last_folder_info() removes FOLDER_FORBIDDEN_CHARS from english keywords in folder name"""
+        import tempfile
+
+        file1 = FileInfo(
+            path=Path("file1.jpg"),
+            date=datetime(2024, 1, 1, 10, 0),
+            keywords=["Park & Nature"],  # & is a forbidden char
+            keywords_german=["Garten"],
+        )
+        last_file = FileInfo(
+            path=Path("file2.jpg"),
+            date=datetime(2024, 1, 1, 11, 0),
+            keywords=["Park & Nature"],
+            keywords_german=["Garten"],
+        )
+        folder_info = FolderInfo(
+            start_date=datetime(2024, 1, 1, 10, 0),
+            end_date=None,
+            place=None,
+            keywords=set(),
+            keywords_german=set(),
+            files=[file1]
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            folder_builder.finish_last_folder_info([folder_info], [last_file], Path(tmpdir), folder_name_language="english")
+
+        folder_name = folder_info.path.name
+        self.assertNotIn("&", folder_name)
+        self.assertIn("Park", folder_name)
+        self.assertIn("Nature", folder_name)
+
 if __name__ == '__main__':
     unittest.main()
 

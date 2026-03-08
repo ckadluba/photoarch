@@ -63,7 +63,7 @@ FILE_DIFF_SCORE_TIME_WEIGHT_NO_GPS: Final = 0.62
 FILE_DIFF_SCORE_LOCATION_WEIGHT_NO_GPS: Final = 0.0
 FILE_DIFF_SCORE_CAPTION_WEIGHT_NO_GPS: Final = 0.38
 
-FOLDER_FORBIDDEN_CHARS: Final = r'[:/\\"\'<>&|.,;„“]' # Characters not used in folder names
+FOLDER_FORBIDDEN_CHARS: Final = r'[:/\\"\'<>&|.,;„“*?]' # Characters not used in folder names
 FOLDER_NAME_KEYWORDS: Final = 10  # Number of keywords to include in folder names
 
 # Month names for folder naming
