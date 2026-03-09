@@ -62,8 +62,8 @@ def analyze_files(input_path: Path, output_path: Path, input_files_order: str, f
         logger.info(f"Analysis took {last_analysis_duration_seconds:.1f} seconds")
 
         # Create a new folder and finish the previous one if the file is different enough
-        if is_new_folder(file_infos, file_info):
-            finish_last_folder_info(folder_infos, file_infos, output_path, folder_name_language)
+        if is_new_folder(file_infos, file_info, ai_models_context):
+            finish_last_folder_info(folder_infos, file_infos, output_path, ai_models_context, folder_name_language)
             assert file_info.date is not None  # Date is guaranteed to be set for non-skipped files
             create_folder_info(folder_infos, file_info.date)
 
@@ -71,7 +71,7 @@ def analyze_files(input_path: Path, output_path: Path, input_files_order: str, f
         folder_infos[-1].files.append(file_info)
 
     # Finish the last folder
-    finish_last_folder_info(folder_infos, file_infos, output_path, folder_name_language)
+    finish_last_folder_info(folder_infos, file_infos, output_path, ai_models_context, folder_name_language)
 
     return folder_infos
 

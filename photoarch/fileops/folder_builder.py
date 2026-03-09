@@ -3,9 +3,9 @@ import re
 from pathlib import Path
 from geopy.distance import geodesic
 from datetime import datetime
-
 from ..config import *
 from ..models import FolderInfo, FileInfo
+from ..ai_models_context import AiModelsContext
 from ..language.caption_comparer import calculate_caption_difference
 from ..language.keyword_reducer import select_top_words
 
@@ -28,7 +28,7 @@ def create_folder_info(folder_infos: list[FolderInfo], start_date: datetime):
     )
     folder_infos.append(folder_info)
 
-def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
+def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo, ai_models_context: AiModelsContext) -> bool:
     """Heuristics to determine if a new folder should be started based on last and current file info
     
          1. Always start a new folder if no previous files exist
@@ -86,7 +86,7 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo) -> bool:
     current_keywords = set(current_info.keywords)
     # Special rule: ignore keywords if either file only has KEYWORD_GENERIC_VIDEO
     if last_keywords != {KEYWORD_GENERIC_VIDEO} and current_keywords != {KEYWORD_GENERIC_VIDEO}:
-        caption_difference = calculate_caption_difference(last_info.caption, current_info.caption)
+        caption_difference = calculate_caption_difference(last_info.caption, current_info.caption, ai_models_context)
         caption_difference_score = caption_difference * caption_weight
 
     # Calculate total difference score (max: 1.0)
@@ -107,7 +107,7 @@ def normalize_datetimes(dt1, dt2):
 
     return dt1, dt2
 
-def finish_last_folder_info(folder_infos: list[FolderInfo], file_infos: list[FileInfo], output_dir: Path, folder_name_language: str = "german") -> bool:
+def finish_last_folder_info(folder_infos: list[FolderInfo], file_infos: list[FileInfo], output_dir: Path, ai_models_context: AiModelsContext, folder_name_language: str = "german") -> bool:
     if len(folder_infos) == 0 or len(file_infos) == 0:
         return False
     
@@ -120,21 +120,21 @@ def finish_last_folder_info(folder_infos: list[FolderInfo], file_infos: list[Fil
     places_all_files = [f.address.name for f in folder_info.files if f.address and f.address.name]
     if file_info.address and file_info.address.name:
         places_all_files.append(file_info.address.name)
-    top_places = select_top_words(places_all_files, top_n=1)
+    top_places = select_top_words(places_all_files, top_n=1, context=ai_models_context)
     folder_info.place = top_places[0] if top_places else None
 
     # Aggregate German keywords (use only top FOLDER_NAME_KEYWORDS most common)
     keywords_all_files = [k for f in folder_info.files if f.keywords_german for k in f.keywords_german if k]    
     if file_info.keywords_german:
         keywords_all_files.extend([k for k in file_info.keywords_german if k])
-    top_unique_keywords = select_top_words(keywords_all_files, top_n=FOLDER_NAME_KEYWORDS)
+    top_unique_keywords = select_top_words(keywords_all_files, top_n=FOLDER_NAME_KEYWORDS, context=ai_models_context)
     folder_info.keywords_german = set(top_unique_keywords)
 
     # Aggregate English keywords (use only top FOLDER_NAME_KEYWORDS most common)
     keywords_all_files_english = [k for f in folder_info.files if f.keywords for k in f.keywords if k]
     if file_info.keywords:
         keywords_all_files_english.extend([k for k in file_info.keywords if k])
-    top_unique_keywords_english = select_top_words(keywords_all_files_english, top_n=FOLDER_NAME_KEYWORDS)
+    top_unique_keywords_english = select_top_words(keywords_all_files_english, top_n=FOLDER_NAME_KEYWORDS, context=ai_models_context)
     folder_info.keywords = set(top_unique_keywords_english)
 
     sanitize_folder_info(folder_info)

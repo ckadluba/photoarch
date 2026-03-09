@@ -2,25 +2,23 @@ from collections import Counter
 import numpy as np
 from re import sub
 from sentence_transformers import SentenceTransformer
+from typing import TYPE_CHECKING
 
 from ..config import FOLDER_FORBIDDEN_CHARS, SEMANTIC_SIMILARITY_MODEL_NAME, MODEL_CACHE_DIR
 
-
-# Initialization
-
-_model = None
+if TYPE_CHECKING:
+    from ..ai_models_context import AiModelsContext
 
 
 # Code
 
-def get_model():
+def get_model(context: AiModelsContext):
     """
     Lazy-load the embedding model.
     """
-    global _model
-    if _model is None:
-        _model = SentenceTransformer(SEMANTIC_SIMILARITY_MODEL_NAME, cache_folder=MODEL_CACHE_DIR)
-    return _model
+    if context.sentence_transformer is None:
+        context.sentence_transformer = SentenceTransformer(SEMANTIC_SIMILARITY_MODEL_NAME, cache_folder=MODEL_CACHE_DIR)
+    return context.sentence_transformer
 
 
 def cosine_similarity(a, b):
@@ -57,7 +55,7 @@ def cluster_words(words, embeddings, similarity_threshold=0.75):
     return clusters
 
 
-def select_top_words(keywords, top_n):
+def select_top_words(keywords, top_n, context: AiModelsContext):
     """
     Cleans a list of keywords:
     - Clean special characters that are not allowed in folder names
@@ -68,6 +66,7 @@ def select_top_words(keywords, top_n):
 
     :param keywords: list of strings
     :param top_n: maximum number of keywords for the folder name
+    :param context: AI models context for model caching.
     :return: cleaned list of top-N keywords
     """
 
@@ -76,6 +75,7 @@ def select_top_words(keywords, top_n):
 
     # Clean special characters
     folder_sanitized_keywords = [sub(FOLDER_FORBIDDEN_CHARS, "", k) for k in keywords]
+
 
     # Track original variants
     word_variants = {}
@@ -90,7 +90,7 @@ def select_top_words(keywords, top_n):
     unique_words = list(lowercase_counts.keys())
 
     # Generate embeddings
-    model = get_model()
+    model = get_model(context)
     embeddings = model.encode(unique_words)
 
     # Cluster semantically similar words

@@ -2,9 +2,15 @@ from pathlib import Path
 import unittest
 from photoarch.fileops import folder_builder
 from photoarch.models import FolderInfo, FileInfo, Address
+from photoarch.ai_models_context import AiModelsContext
 from datetime import datetime, timezone, timedelta
 
 class TestFolderBuilder(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.context = AiModelsContext()
+
     def test_create_folder_info(self):
         folder_infos = []
         start_date = datetime(2024, 1, 1)
@@ -15,29 +21,29 @@ class TestFolderBuilder(unittest.TestCase):
     def test_is_new_folder_no_previous(self):
         file_infos = []
         current_info = FileInfo(path=Path('test.jpg'), date=datetime(2024,1,1), lat=None, lon=None, keywords=[], camera_model=None, address=None)
-        self.assertTrue(folder_builder.is_new_folder(file_infos, current_info))
+        self.assertTrue(folder_builder.is_new_folder(file_infos, current_info, self.context))
 
     def test_is_new_folder_month_change(self):
         last = FileInfo(path=Path('a.jpg'), date=datetime(2024,1,1), lat=1.0, lon=1.0, keywords=["foo"], camera_model=None, address=None)
         current = FileInfo(path=Path('b.jpg'), date=datetime(2024,2,1), lat=1.0, lon=1.0, keywords=["foo"], camera_model=None, address=None)
-        self.assertTrue(folder_builder.is_new_folder([last], current))
+        self.assertTrue(folder_builder.is_new_folder([last], current, self.context))
 
     def test_is_new_folder_year_change(self):
         last = FileInfo(path=Path('a.jpg'), date=datetime(2023,12,31), lat=1.0, lon=1.0, keywords=["foo"], camera_model=None, address=None)
         current = FileInfo(path=Path('b.jpg'), date=datetime(2024,1,1), lat=1.0, lon=1.0, keywords=["foo"], camera_model=None, address=None)
-        self.assertTrue(folder_builder.is_new_folder([last], current))
+        self.assertTrue(folder_builder.is_new_folder([last], current, self.context))
 
     def test_is_new_folder_time_and_location(self):
         # Both time and location differ enough
         last = FileInfo(path=Path('a.jpg'), date=datetime(2024,1,1,0,0), lat=0.0, lon=0.0, keywords=["foo"], camera_model=None, address=None)
         current = FileInfo(path=Path('b.jpg'), date=datetime(2024,1,1,5,0), lat=10.0, lon=10.0, keywords=["foo"], camera_model=None, address=None)
-        self.assertTrue(folder_builder.is_new_folder([last], current))
+        self.assertTrue(folder_builder.is_new_folder([last], current, self.context))
 
     def test_is_new_folder_time_and_keywords(self):
         # Time and captions differ
         last = FileInfo(path=Path('a.jpg'), date=datetime(2024,1,1,0,0), lat=0.0, lon=0.0, keywords=["foo"], camera_model=None, address=None, caption="a man and a woman posing for a photo on a city street")
         current = FileInfo(path=Path('b.jpg'), date=datetime(2024,1,1,5,0), lat=0.01, lon=0.01, keywords=["bar"], camera_model=None, address=None, caption="mathematical equations")
-        self.assertTrue(folder_builder.is_new_folder([last], current))
+        self.assertTrue(folder_builder.is_new_folder([last], current, self.context))
 
     def test_is_new_folder_location_and_keywords(self):
         # Location and captions differ - need larger distance to reach 0.6 threshold
@@ -45,32 +51,32 @@ class TestFolderBuilder(unittest.TestCase):
         # captions are different so keyword score adds enough to reach threshold
         last = FileInfo(path=Path('a.jpg'), date=datetime(2024,1,1,0,0), lat=0.0, lon=0.0, keywords=["foo"], camera_model=None, address=None, caption="a dog playing in a sunny park")
         current = FileInfo(path=Path('b.jpg'), date=datetime(2024,1,1,1,0), lat=10.0, lon=10.0, keywords=["bar"], camera_model=None, address=None, caption="a car speeding on the highway at night")
-        self.assertTrue(folder_builder.is_new_folder([last], current))
+        self.assertTrue(folder_builder.is_new_folder([last], current, self.context))
 
     def test_is_new_folder_only_time_differs(self):
         # Only time differs (should be False)
         last = FileInfo(path=Path('a.jpg'), date=datetime(2024,1,1,0,0), lat=0.0, lon=0.0, keywords=["foo"], camera_model=None, address=None)
         current = FileInfo(path=Path('b.jpg'), date=datetime(2024,1,1,5,0), lat=0.0, lon=0.0, keywords=["foo"], camera_model=None, address=None)
-        self.assertFalse(folder_builder.is_new_folder([last], current))
+        self.assertFalse(folder_builder.is_new_folder([last], current, self.context))
 
     def test_is_new_folder_only_location_differs(self):
         # Only location differs (should be False)
         last = FileInfo(path=Path('a.jpg'), date=datetime(2024,1,1,0,0), lat=0.0, lon=0.0, keywords=["foo"], camera_model=None, address=None)
         current = FileInfo(path=Path('b.jpg'), date=datetime(2024,1,1,0,1), lat=10.0, lon=10.0, keywords=["foo"], camera_model=None, address=None)
-        self.assertFalse(folder_builder.is_new_folder([last], current))
+        self.assertFalse(folder_builder.is_new_folder([last], current, self.context))
 
     def test_is_new_folder_only_keywords_differ(self):
         # Only keywords differ (should be False)
         last = FileInfo(path=Path('a.jpg'), date=datetime(2024,1,1,0,0), lat=0.0, lon=0.0, keywords=["foo"], camera_model=None, address=None)
         current = FileInfo(path=Path('b.jpg'), date=datetime(2024,1,1,0,1), lat=0.0, lon=0.0, keywords=["bar"], camera_model=None, address=None)
-        self.assertFalse(folder_builder.is_new_folder([last], current))
+        self.assertFalse(folder_builder.is_new_folder([last], current, self.context))
 
     def test_is_new_folder_keywords_video_exception(self):
         # If either keywords is only generic video, keywords should not count as different
         from photoarch.config import KEYWORD_GENERIC_VIDEO
         last = FileInfo(path=Path('a.mp4'), date=datetime(2024,1,1,0,0), lat=0.0, lon=0.0, keywords=[KEYWORD_GENERIC_VIDEO], camera_model=None, address=None)
         current = FileInfo(path=Path('b.mp4'), date=datetime(2024,1,1,0,1), lat=0.0, lon=0.0, keywords=["foo"], camera_model=None, address=None)
-        self.assertFalse(folder_builder.is_new_folder([last], current))
+        self.assertFalse(folder_builder.is_new_folder([last], current, self.context))
 
     def test_is_new_folder_real_world_scenario(self):
         # Real-world scenario with guinea pig photo and people photo
@@ -97,7 +103,7 @@ class TestFolderBuilder(unittest.TestCase):
         # Should trigger new folder: different location (~7.2km) + different captions
         # Time: ~27.9 min (~0.06 score), GPS: ~7.2km (0.4 score), captions completely different (high keyword score)
         # Total score exceeds 0.6 threshold
-        result = folder_builder.is_new_folder([last_info], current_info)
+        result = folder_builder.is_new_folder([last_info], current_info, self.context)
         self.assertTrue(result)
 
     def test_finish_last_folder_info_aggregates_most_common_place(self):
@@ -168,7 +174,7 @@ class TestFolderBuilder(unittest.TestCase):
         # Call finish_last_folder_info
         with tempfile.TemporaryDirectory() as tmpdir:
             output_dir = Path(tmpdir)
-            result = folder_builder.finish_last_folder_info([folder_info], [last_file], output_dir)
+            result = folder_builder.finish_last_folder_info([folder_info], [last_file], output_dir, self.context)
         
         # Assert that the function returned True
         self.assertTrue(result)
@@ -202,7 +208,7 @@ class TestFolderBuilder(unittest.TestCase):
         )
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            folder_builder.finish_last_folder_info([folder_info], [last_file], Path(tmpdir), folder_name_language="german")
+            folder_builder.finish_last_folder_info([folder_info], [last_file], Path(tmpdir), self.context, folder_name_language="german")
 
         folder_name = folder_info.path.name
         self.assertEqual("2024-01-01T1000 Garten Natur", folder_name)
@@ -233,7 +239,7 @@ class TestFolderBuilder(unittest.TestCase):
         )
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            folder_builder.finish_last_folder_info([folder_info], [last_file], Path(tmpdir), folder_name_language="english")
+            folder_builder.finish_last_folder_info([folder_info], [last_file], Path(tmpdir), self.context, folder_name_language="english")
 
         folder_name = folder_info.path.name
         self.assertEqual("2024-01-01T1000 Nature Park", folder_name)
@@ -264,7 +270,7 @@ class TestFolderBuilder(unittest.TestCase):
         )
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            folder_builder.finish_last_folder_info([folder_info], [last_file], Path(tmpdir), folder_name_language="german")
+            folder_builder.finish_last_folder_info([folder_info], [last_file], Path(tmpdir), self.context, folder_name_language="german")
 
         folder_name = folder_info.path.name
         self.assertNotIn("&", folder_name)
@@ -297,7 +303,7 @@ class TestFolderBuilder(unittest.TestCase):
         )
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            folder_builder.finish_last_folder_info([folder_info], [last_file], Path(tmpdir), folder_name_language="english")
+            folder_builder.finish_last_folder_info([folder_info], [last_file], Path(tmpdir), self.context, folder_name_language="english")
 
         folder_name = folder_info.path.name
         self.assertNotIn("&", folder_name)
