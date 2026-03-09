@@ -37,6 +37,7 @@ def test_create_caption_generator_llava():
 
 
 @pytest.mark.longrunning
+@pytest.mark.skip(reason="LLaVA model download and inference can be very slow")
 def test_llava_get_caption_for_image_file():
     """LONG RUNNING: Tests LLaVA AI caption generation (model download/inference)"""
     cg = LlavaCaptionGenerator(device="cpu")

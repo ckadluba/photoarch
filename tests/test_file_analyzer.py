@@ -1,18 +1,21 @@
 import unittest
-
 import pytest
-from photoarch.analysis import file_analyzer
 from pathlib import Path
+
+from photoarch.analysis import file_analyzer
+from photoarch.analysis.ai_captioning_blip2 import Blip2CaptionGenerator
+
 
 class TestFileAnalyzer(unittest.TestCase):
     def test_analyze_file_with_cache(self):
         # Arrange
+        file_analyzer.CACHE_DIR.mkdir(parents=True, exist_ok=True)
         cache_file = file_analyzer.CACHE_DIR / "dummy.json"
         cache_file.write_text('{"path": "dummy.jpg", "date": null, "lat": null, "lon": null, "keywords": [], "cameraModel": "Test Camera Model", "address": null}')
         file_path = Path("dummy.jpg")
 
         # Act
-        info = file_analyzer.analyze_file(file_path)
+        info, _ = file_analyzer.analyze_file(file_path)
 
         # Assert
         self.assertEqual(info.path.name, "dummy.jpg")
@@ -23,9 +26,10 @@ class TestFileAnalyzer(unittest.TestCase):
     def test_analyze_file_real_image(self):
         # Arrange
         test_image = Path("tests/data/input/PXL_20250708_095842343.jpg")
+        captioner = Blip2CaptionGenerator(device="cpu")
 
         # Act
-        info = file_analyzer.analyze_file(test_image)
+        info, _ = file_analyzer.analyze_file(test_image, captioner)
 
         # Assert
         self.assertEqual(info.path.name, test_image.name)

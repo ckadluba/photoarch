@@ -1,7 +1,7 @@
 import unittest
 from photoarch.analysis import exif_reader
 from pathlib import Path
-import os
+
 
 class TestExifReader(unittest.TestCase):
     def test_ensure_exiftool_available(self):

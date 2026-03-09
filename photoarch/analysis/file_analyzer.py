@@ -24,16 +24,11 @@ OUTPUT_DIR = Path(OUTPUT_DIR_STR)
 CACHE_DIR = Path(CACHE_DIR_STR)
 
 logger = logging.getLogger(__name__)
-_captioner: CaptionGenerator = create_caption_generator("blip-2", device="cpu")
 
 
 # Code
 
-def init_captioner(model: str = "blip-2") -> None:
-    global _captioner
-    _captioner = create_caption_generator(model, device="cpu")
-
-def analyze_file(file_path: Path) -> FileInfo:
+def analyze_file(file_path: Path, captioner: CaptionGenerator | None = None, captioning_ai_model: str = "blip-2") -> tuple[FileInfo, CaptionGenerator | None]:
     """Analyze image and return FileInfo"""
 
     # Use cache entry if available
@@ -41,7 +36,7 @@ def analyze_file(file_path: Path) -> FileInfo:
     if cache_file.exists():
         logger.info(f"Using cached {cache_file.name}.")
         with open(cache_file, "r", encoding="utf-8") as f:
-            return FileInfo.from_json(f.read())
+            return FileInfo.from_json(f.read()), captioner
     
     # Create new FileInfo
     file_info = FileInfo(
@@ -60,7 +55,7 @@ def analyze_file(file_path: Path) -> FileInfo:
     if not does_filename_meet_criteria(file_path):
         logger.info(f"Filename does not match criteria {file_path.name}. Will skip.")
         file_info.skip = True
-        return file_info
+        return file_info, captioner
 
     # Process file
     exif_data = get_exif_data_from_file(file_path)
@@ -97,7 +92,10 @@ def analyze_file(file_path: Path) -> FileInfo:
 
     # AI analysis for keywords and caption
     if file_path.suffix.lower() in IMAGE_FILE_EXTENSIONS:
-        caption = _captioner.get_caption_for_image_file(file_path)
+        if captioner is None:
+            logger.info(f"Initializing captioner ({captioning_ai_model}) …")
+            captioner = create_caption_generator(captioning_ai_model, device="cpu")
+        caption = captioner.get_caption_for_image_file(file_path)
         keywords = get_keywords_from_caption(caption, STOPWORDS)
         caption_german = translate_english_to_german(caption)
         keywords_german = get_keywords_from_caption(caption_german, STOPWORDS_GERMAN)
@@ -121,4 +119,4 @@ def analyze_file(file_path: Path) -> FileInfo:
         encoding="utf-8"
     )
 
-    return file_info
+    return file_info, captioner

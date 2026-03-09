@@ -6,7 +6,8 @@ import argparse
 
 from .models import FolderInfo, FileInfo
 from .logging_config import setup_logging
-from .analysis.file_analyzer import CACHE_DIR, INPUT_DIR, OUTPUT_DIR, analyze_file, init_captioner
+from .analysis.file_analyzer import CACHE_DIR, INPUT_DIR, OUTPUT_DIR, analyze_file
+from .analysis.caption_generator import CaptionGenerator
 from .fileops.folder_builder import create_folder_info, is_new_folder, finish_last_folder_info
 
 
@@ -25,14 +26,13 @@ def main(input_dir: str, output_dir: str, input_files_order: str, dry_run: bool 
         logger.error(f"Input directory {input_path} does not exist or is not a directory.")
         return
 
-    init_captioner(captioning_ai_model)
-    folder_infos = analyze_files(input_path, output_path, input_files_order, folder_name_language)
+    folder_infos = analyze_files(input_path, output_path, input_files_order, folder_name_language, captioning_ai_model)
     copy_files(folder_infos, input_path, output_path, dry_run)
 
     logger.info("Finished.")
 
 
-def analyze_files(input_path: Path, output_path: Path, input_files_order: str, folder_name_language: str = "german") -> list[FolderInfo]:
+def analyze_files(input_path: Path, output_path: Path, input_files_order: str, folder_name_language: str = "german", captioning_ai_model: str = "blip-2") -> list[FolderInfo]:
     logger.info(f"Analyzing files in {input_path} …")
     if input_files_order == "filename":
         files = sorted(input_path.iterdir(), key=lambda f: f.name)
@@ -42,6 +42,7 @@ def analyze_files(input_path: Path, output_path: Path, input_files_order: str, f
     file_infos: list[FileInfo] = []
     folder_infos: list[FolderInfo] = []
     last_analysis_duration_seconds = 0.0
+    captioner: CaptionGenerator | None = None
     for file_info in files:
         # Analyze the file
         datetime_start = datetime.now()
@@ -51,7 +52,7 @@ def analyze_files(input_path: Path, output_path: Path, input_files_order: str, f
         eta_seconds = remaining_files * last_analysis_duration_seconds
         logger.info(f"Analyzing file {file_info.name} ({len(file_infos) + 1}/{len(files)}), ETA: {timedelta(seconds=eta_seconds)} …")
 
-        file_info = analyze_file(file_info)
+        file_info, captioner = analyze_file(file_info, captioner, captioning_ai_model)
         if file_info.skip:
             continue  # Skip files that do not match the criteria
 

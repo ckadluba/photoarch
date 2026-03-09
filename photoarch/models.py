@@ -5,8 +5,6 @@ from pathlib import Path
 from datetime import datetime
 from typing import Optional
 
-from .config import *
-
 
 @dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
