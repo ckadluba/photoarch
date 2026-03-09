@@ -8,12 +8,12 @@ from ..config import (
     STOPWORDS, STOPWORDS_GERMAN, KEYWORD_GENERIC_VIDEO
 )
 from ..models import FileInfo
+from ..ai_models_context import AiModelsContext
 from ..fileops.file_utils import get_file_modified_datetime, does_filename_meet_criteria
 from ..services.geocoding import get_address_from_coords
 from ..services.translate import translate_english_to_german
 from ..language.keyword_generator import get_keywords_from_caption
 from .exif_reader import get_exif_data_from_file, get_date_from_exif_data, get_camera_from_exif_data, get_gps_from_exif_data
-from .caption_generator import CaptionGenerator
 from .caption_generator_factory import create_caption_generator
 
 
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 # Code
 
-def analyze_file(file_path: Path, captioner: CaptionGenerator | None = None, captioning_ai_model: str = "blip-2") -> tuple[FileInfo, CaptionGenerator | None]:
+def analyze_file(file_path: Path, ai_models_context: AiModelsContext | None = None, captioning_ai_model: str = "blip-2") -> FileInfo:
     """Analyze image and return FileInfo"""
 
     # Use cache entry if available
@@ -36,7 +36,7 @@ def analyze_file(file_path: Path, captioner: CaptionGenerator | None = None, cap
     if cache_file.exists():
         logger.info(f"Using cached {cache_file.name}.")
         with open(cache_file, "r", encoding="utf-8") as f:
-            return FileInfo.from_json(f.read()), captioner
+            return FileInfo.from_json(f.read())
     
     # Create new FileInfo
     file_info = FileInfo(
@@ -55,7 +55,7 @@ def analyze_file(file_path: Path, captioner: CaptionGenerator | None = None, cap
     if not does_filename_meet_criteria(file_path):
         logger.info(f"Filename does not match criteria {file_path.name}. Will skip.")
         file_info.skip = True
-        return file_info, captioner
+        return file_info
 
     # Process file
     exif_data = get_exif_data_from_file(file_path)
@@ -92,10 +92,12 @@ def analyze_file(file_path: Path, captioner: CaptionGenerator | None = None, cap
 
     # AI analysis for keywords and caption
     if file_path.suffix.lower() in IMAGE_FILE_EXTENSIONS:
-        if captioner is None:
+        if ai_models_context is None:
+            ai_models_context = AiModelsContext()
+        if ai_models_context.captioner is None:
             logger.info(f"Initializing captioner ({captioning_ai_model}) …")
-            captioner = create_caption_generator(captioning_ai_model, device="cpu")
-        caption = captioner.get_caption_for_image_file(file_path)
+            ai_models_context.captioner = create_caption_generator(captioning_ai_model, device="cpu")
+        caption = ai_models_context.captioner.get_caption_for_image_file(file_path)
         keywords = get_keywords_from_caption(caption, STOPWORDS)
         caption_german = translate_english_to_german(caption)
         keywords_german = get_keywords_from_caption(caption_german, STOPWORDS_GERMAN)
@@ -119,4 +121,4 @@ def analyze_file(file_path: Path, captioner: CaptionGenerator | None = None, cap
         encoding="utf-8"
     )
 
-    return file_info, captioner
+    return file_info

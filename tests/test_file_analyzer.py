@@ -4,6 +4,7 @@ from pathlib import Path
 
 from photoarch.analysis import file_analyzer
 from photoarch.analysis.ai_captioning_blip2 import Blip2CaptionGenerator
+from photoarch.ai_models_context import AiModelsContext
 
 
 class TestFileAnalyzer(unittest.TestCase):
@@ -15,7 +16,7 @@ class TestFileAnalyzer(unittest.TestCase):
         file_path = Path("dummy.jpg")
 
         # Act
-        info, _ = file_analyzer.analyze_file(file_path)
+        info = file_analyzer.analyze_file(file_path)
 
         # Assert
         self.assertEqual(info.path.name, "dummy.jpg")
@@ -26,10 +27,10 @@ class TestFileAnalyzer(unittest.TestCase):
     def test_analyze_file_real_image(self):
         # Arrange
         test_image = Path("tests/data/input/PXL_20250708_095842343.jpg")
-        captioner = Blip2CaptionGenerator(device="cpu")
+        context = AiModelsContext(captioner=Blip2CaptionGenerator(device="cpu"))
 
         # Act
-        info, _ = file_analyzer.analyze_file(test_image, captioner)
+        info = file_analyzer.analyze_file(test_image, context)
 
         # Assert
         self.assertEqual(info.path.name, test_image.name)

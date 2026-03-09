@@ -5,9 +5,9 @@ from datetime import datetime, timedelta
 import argparse
 
 from .models import FolderInfo, FileInfo
+from .ai_models_context import AiModelsContext
 from .logging_config import setup_logging
 from .analysis.file_analyzer import CACHE_DIR, INPUT_DIR, OUTPUT_DIR, analyze_file
-from .analysis.caption_generator import CaptionGenerator
 from .fileops.folder_builder import create_folder_info, is_new_folder, finish_last_folder_info
 
 
@@ -42,7 +42,7 @@ def analyze_files(input_path: Path, output_path: Path, input_files_order: str, f
     file_infos: list[FileInfo] = []
     folder_infos: list[FolderInfo] = []
     last_analysis_duration_seconds = 0.0
-    captioner: CaptionGenerator | None = None
+    ai_models_context = AiModelsContext()
     for file_info in files:
         # Analyze the file
         datetime_start = datetime.now()
@@ -52,7 +52,7 @@ def analyze_files(input_path: Path, output_path: Path, input_files_order: str, f
         eta_seconds = remaining_files * last_analysis_duration_seconds
         logger.info(f"Analyzing file {file_info.name} ({len(file_infos) + 1}/{len(files)}), ETA: {timedelta(seconds=eta_seconds)} …")
 
-        file_info, captioner = analyze_file(file_info, captioner, captioning_ai_model)
+        file_info = analyze_file(file_info, ai_models_context, captioning_ai_model)
         if file_info.skip:
             continue  # Skip files that do not match the criteria
 
