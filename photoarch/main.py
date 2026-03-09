@@ -6,7 +6,7 @@ import argparse
 
 from .models import FolderInfo, FileInfo
 from .logging_config import setup_logging
-from .analysis.file_analyzer import CACHE_DIR, INPUT_DIR, OUTPUT_DIR, analyze_file
+from .analysis.file_analyzer import CACHE_DIR, INPUT_DIR, OUTPUT_DIR, analyze_file, init_captioner
 from .fileops.folder_builder import create_folder_info, is_new_folder, finish_last_folder_info
 
 
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 # Code
 
-def main(input_dir: str, output_dir: str, input_files_order: str, dry_run: bool = False, folder_name_language: str = "german"):
+def main(input_dir: str, output_dir: str, input_files_order: str, dry_run: bool = False, folder_name_language: str = "german", captioning_ai_model: str = "blip-2"):
     input_path = Path(input_dir)
     output_path = Path(output_dir)
 
@@ -25,6 +25,7 @@ def main(input_dir: str, output_dir: str, input_files_order: str, dry_run: bool 
         logger.error(f"Input directory {input_path} does not exist or is not a directory.")
         return
 
+    init_captioner(captioning_ai_model)
     folder_infos = analyze_files(input_path, output_path, input_files_order, folder_name_language)
     copy_files(folder_infos, input_path, output_path, dry_run)
 
@@ -125,10 +126,16 @@ def cli():
         choices=["german", "english"],
         help="Language used for keywords in folder names (default: german)",
     )
+    parser.add_argument(
+        "--captioning-ai-model",
+        default="blip-2",
+        choices=["blip-2", "llava"],
+        help="AI model used for image captioning (default: blip-2)",
+    )
     args = parser.parse_args()
 
     setup_logging(args.log_level)
-    main(args.input, args.output, input_files_order=args.input_files_order, dry_run=args.dry_run, folder_name_language=args.folder_name_language)
+    main(args.input, args.output, input_files_order=args.input_files_order, dry_run=args.dry_run, folder_name_language=args.folder_name_language, captioning_ai_model=args.captioning_ai_model)
 
 if __name__ == "__main__":
     cli()

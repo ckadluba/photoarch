@@ -3,7 +3,7 @@ import numpy as np
 from re import sub
 from sentence_transformers import SentenceTransformer
 
-from ..config import FOLDER_FORBIDDEN_CHARS, SEMANTIC_SIMILARITY_MODEL_NAME
+from ..config import FOLDER_FORBIDDEN_CHARS, SEMANTIC_SIMILARITY_MODEL_NAME, MODEL_CACHE_DIR
 
 
 # Initialization
@@ -19,7 +19,7 @@ def get_model():
     """
     global _model
     if _model is None:
-        _model = SentenceTransformer(SEMANTIC_SIMILARITY_MODEL_NAME)
+        _model = SentenceTransformer(SEMANTIC_SIMILARITY_MODEL_NAME, cache_folder=MODEL_CACHE_DIR)
     return _model
 
 

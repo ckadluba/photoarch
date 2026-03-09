@@ -3,17 +3,14 @@ from PIL import Image
 import torch
 from transformers import Blip2Processor, Blip2ForConditionalGeneration
 
-from ..config import IMAGE_CAPTIONING_MODEL_NAME, MODEL_CACHE_DIR
+from ..config import IMAGE_CAPTIONING_MODEL_NAME_BLIP2, MODEL_CACHE_DIR
+from .caption_generator import CaptionGenerator
 
-
-# Initialization
 
 logger = logging.getLogger(__name__)
 
 
-# Code
-
-class CaptionGenerator:
+class Blip2CaptionGenerator(CaptionGenerator):
     def __init__(self, device: str = "cpu"):
         self.device = device
         self._model = None
@@ -23,13 +20,12 @@ class CaptionGenerator:
         if self._model is None:
             logger.info("Loading BLIP-2 Model (CPU) …")
             self._processor = Blip2Processor.from_pretrained(
-                IMAGE_CAPTIONING_MODEL_NAME,
+                IMAGE_CAPTIONING_MODEL_NAME_BLIP2,
                 cache_dir=MODEL_CACHE_DIR,
                 use_fast=True
             )
-
             self._model = Blip2ForConditionalGeneration.from_pretrained(
-                IMAGE_CAPTIONING_MODEL_NAME,
+                IMAGE_CAPTIONING_MODEL_NAME_BLIP2,
                 cache_dir=MODEL_CACHE_DIR,
                 dtype=torch.float32
             )
@@ -39,7 +35,6 @@ class CaptionGenerator:
         self._load_model()
 
         img = Image.open(file_path).convert("RGB")
-
         inputs = self._processor(images=img, return_tensors="pt").to(self.device)
 
         with torch.no_grad():

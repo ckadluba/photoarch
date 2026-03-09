@@ -2,7 +2,7 @@ import logging
 from functools import lru_cache
 from sentence_transformers import SentenceTransformer, util
 
-from ..config import SEMANTIC_SIMILARITY_MODEL_NAME
+from ..config import SEMANTIC_SIMILARITY_MODEL_NAME, MODEL_CACHE_DIR
 
 
 # Initialization
@@ -17,7 +17,7 @@ def get_model() -> SentenceTransformer:
     global _model
     if _model is None:
         logger.info(f"Loading semantic similarity model: {SEMANTIC_SIMILARITY_MODEL_NAME}")
-        _model = SentenceTransformer(SEMANTIC_SIMILARITY_MODEL_NAME)
+        _model = SentenceTransformer(SEMANTIC_SIMILARITY_MODEL_NAME, cache_folder=MODEL_CACHE_DIR)
         logger.info("Semantic similarity model loaded successfully")
     return _model
 
