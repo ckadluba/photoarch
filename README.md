@@ -8,7 +8,11 @@ Photo Archive Organizer is a complete Python module/package for automatically or
 
 ### Key Features
 
-- **AI-Powered Content Analysis**: Uses the BLIP-2 (Bootstrapping Language-Image Pre-training) model to generate captions and keywords for images used locally without cloud access. AI processing happens offline. The model is automatically downloaded on first execution of the module.
+- **AI-Powered Content Analysis**: Uses a local AI vision model to generate captions and keywords for images — without cloud access. Two models are supported and can be selected via the `--captioning-ai-model` command-line parameter:
+  - **BLIP-2** (`blip-2`, default): [Salesforce/blip2-flan-t5-xl](https://huggingface.co/Salesforce/blip2-flan-t5-xl) — a fast, lightweight vision-language model. Good quality captions with low memory requirements.
+  - **LLaVA** (`llava`): [llava-hf/llava-1.5-7b-hf](https://huggingface.co/llava-hf/llava-1.5-7b-hf) — a large multimodal language model that produces richer, more descriptive captions at the cost of higher memory usage and longer inference time.
+  
+  Both models run fully offline. The selected model is automatically downloaded on first use and cached locally in the `models/` directory.
 - **Semantic Caption Comparison**: Uses a Sentence-Transformer model (paraphrase-multilingual-MiniLM-L12-v2) to detect semantically similar image captions for intelligent photo grouping. This allows recognition of related concepts even when exact words differ.
 - **Geolocation Processing**: Extracts GPS coordinates from EXIF data and performs reverse geocoding to determine locations
 - **Intelligent Grouping**: Automatically groups photos into folders based on:
@@ -113,6 +117,7 @@ main.run(input_dir="/path/to/photos", output_dir="/path/to/sorted")
 - `--input-files-order` - Order to process input files: `filename` or `modified-date` (default: `filename`)
 - `--dry-run` - Analyze photos and print the result folder tree without copying any files
 - `--folder-name-language` - Language used for keywords in folder names: `german` or `english` (default: `german`). This only affects folder names — metadata JSON files always contain both the original English and translated German keywords and captions regardless of this setting.
+- `--captioning-ai-model` - AI model used for image captioning: `blip-2` or `llava` (default: `blip-2`). See [AI Models](#ai-models) for details.
 
 ### Output Structure
 
@@ -174,7 +179,7 @@ Each photo has an accompanying JSON metadata file containing:
    - Timestamp (from EXIF or file modification date)
    - GPS coordinates (from EXIF data)
    - Location name (reverse geocoding via OpenStreetMap)
-   - Image captions (AI-generated via offline BLIP-2 model)
+   - Image captions (AI-generated via offline model — BLIP-2 by default, LLaVA optionally)
 
 2. **Folder Grouping**: Photos are grouped into folders based on:
    - Same month/year
@@ -208,7 +213,8 @@ The module caches analysis results in `.photoarch/` to speed up repeated runs. D
 - Only `.jpg` images and `.mp4` videos are processed
 - Reverse geocoding uses OpenStreetMap Nominatim API (rate-limited)
 - Keyword translation uses Google Translate API (may be rate-limited)
-- AI analysis of the image happens offline with downloaded BLIP-2 and Sentence-Transformer models
+- AI image captioning happens offline with a locally downloaded model (BLIP-2 or LLaVA)
+- Semantic caption comparison uses the offline Sentence-Transformer model (paraphrase-multilingual-MiniLM-L12-v2)
 - Original files are **copied**, not moved (originals remain in input directory)
 - The module works with photos and videos from different cameras and phones as long as they contain EXIF data. It was mainly tested with Google Pixel 8 and Samsung Galaxy A15 phones.
 
@@ -218,25 +224,50 @@ The module is organized as follows:
 
 ```
 photoarch/
-├── config.py                # Configuration constants
-├── logging_config.py        # Logging setup
-├── main.py                  # Entry point for CLI and module usage
-├── models.py                # Shared data model classes
+├── config.py                      # Configuration constants
+├── logging_config.py              # Logging setup
+├── main.py                        # Entry point for CLI and module usage
+├── models.py                      # Shared data model classes
 ├── analysis/
-│   ├── ai_captioning.py     # AI caption generation (BLIP-2 model)
-│   ├── exif_reader.py       # EXIF metadata extraction
-│   └── file_analyzer.py     # Orchestrates per-file analysis
+│   ├── caption_generator.py       # Abstract base class (interface) for caption generators
+│   ├── caption_generator_factory.py  # Factory function create_caption_generator()
+│   ├── ai_captioning_blip2.py     # Blip2CaptionGenerator (BLIP-2 model)
+│   ├── ai_captioning_llava.py     # LlavaCaptionGenerator (LLaVA model)
+│   ├── exif_reader.py             # EXIF metadata extraction
+│   └── file_analyzer.py          # Orchestrates per-file analysis
 ├── fileops/
-│   ├── file_utils.py        # File copy and path utilities
-│   └── folder_builder.py    # Output folder creation and naming
+│   ├── file_utils.py              # File copy and path utilities
+│   └── folder_builder.py         # Output folder creation and naming
 ├── language/
-│   ├── caption_comparer.py  # Semantic caption similarity (Sentence-Transformer)
-│   ├── keyword_generator.py # Keyword extraction from captions
-│   └── keyword_reducer.py   # Deduplication and filtering of keywords
+│   ├── caption_comparer.py        # Semantic caption similarity (Sentence-Transformer)
+│   ├── keyword_generator.py       # Keyword extraction from captions
+│   └── keyword_reducer.py         # Deduplication and filtering of keywords
 └── services/
-    ├── geocoding.py         # Reverse geocoding via OpenStreetMap Nominatim
-    └── translate.py         # Keyword translation via Google Translate
+    ├── geocoding.py               # Reverse geocoding via OpenStreetMap Nominatim
+    └── translate.py              # Keyword translation via Google Translate
 ```
+
+## AI Models
+
+### Image Captioning
+
+Image captioning is the core AI step that generates a text description for each photo. This description is used to produce keywords for folder naming and to compare photos for grouping. Two models are supported:
+
+| Parameter value | Model | Description |
+|---|---|---|
+| `blip-2` *(default)* | [Salesforce/blip2-flan-t5-xl](https://huggingface.co/Salesforce/blip2-flan-t5-xl) | Lightweight vision-language model. Fast inference, low memory usage (~4 GB). Caption quality is good for most photos. |
+| `llava` | [llava-hf/llava-1.5-7b-hf](https://huggingface.co/llava-hf/llava-1.5-7b-hf) | Large multimodal language model (7B parameters). Produces richer, more detailed captions. Requires more memory (~14 GB) and is slower. |
+
+Both models run **fully offline** after an initial download. Models are cached in the `models/` directory.
+
+Select the model via the `--captioning-ai-model` command-line parameter:
+```bash
+python -m photoarch.main --captioning-ai-model llava
+```
+
+### Semantic Caption Comparison
+
+For grouping photos by content similarity, the [paraphrase-multilingual-MiniLM-L12-v2](https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2) Sentence-Transformer model is used. This model is always active and cannot be changed via command-line parameters.
 
 ## Extending the Module
 

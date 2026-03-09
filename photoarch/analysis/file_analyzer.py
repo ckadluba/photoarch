@@ -13,7 +13,8 @@ from ..services.geocoding import get_address_from_coords
 from ..services.translate import translate_english_to_german
 from ..language.keyword_generator import get_keywords_from_caption
 from .exif_reader import get_exif_data_from_file, get_date_from_exif_data, get_camera_from_exif_data, get_gps_from_exif_data
-from .ai_captioning import CaptionGenerator
+from .caption_generator import CaptionGenerator
+from .caption_generator_factory import create_caption_generator
 
 
 # Initialization
@@ -23,10 +24,14 @@ OUTPUT_DIR = Path(OUTPUT_DIR_STR)
 CACHE_DIR = Path(CACHE_DIR_STR)
 
 logger = logging.getLogger(__name__)
-_captioner = CaptionGenerator(device="cpu")  # BLIP-2 model for AI captioning (CPU is sufficient for inference, no need for GPU)
+_captioner: CaptionGenerator = create_caption_generator("blip-2", device="cpu")
 
 
 # Code
+
+def init_captioner(model: str = "blip-2") -> None:
+    global _captioner
+    _captioner = create_caption_generator(model, device="cpu")
 
 def analyze_file(file_path: Path) -> FileInfo:
     """Analyze image and return FileInfo"""
@@ -90,7 +95,7 @@ def analyze_file(file_path: Path) -> FileInfo:
         logger.warning(f"Could not read address from {file_path.name}.")
     file_info.address = address
 
-    # BLIP AI analysis for keywords and caption
+    # AI analysis for keywords and caption
     if file_path.suffix.lower() in IMAGE_FILE_EXTENSIONS:
         caption = _captioner.get_caption_for_image_file(file_path)
         keywords = get_keywords_from_caption(caption, STOPWORDS)
