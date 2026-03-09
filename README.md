@@ -224,27 +224,28 @@ The module is organized as follows:
 
 ```
 photoarch/
-├── config.py                      # Configuration constants
-├── logging_config.py              # Logging setup
-├── main.py                        # Entry point for CLI and module usage
-├── models.py                      # Shared data model classes
+├── ai_models_context.py               # Runtime container for loaded AI model instances
+├── config.py                          # Configuration constants
+├── logging_config.py                  # Logging setup
+├── main.py                            # Entry point for CLI and module usage
+├── models.py                          # Shared data model classes
 ├── analysis/
-│   ├── caption_generator.py       # Abstract base class (interface) for caption generators
-│   ├── caption_generator_factory.py  # Factory function create_caption_generator()
-│   ├── ai_captioning_blip2.py     # Blip2CaptionGenerator (BLIP-2 model)
-│   ├── ai_captioning_llava.py     # LlavaCaptionGenerator (LLaVA model)
-│   ├── exif_reader.py             # EXIF metadata extraction
-│   └── file_analyzer.py          # Orchestrates per-file analysis
+│   ├── caption_generator.py           # Abstract base class (interface) for caption generators
+│   ├── caption_generator_factory.py   # Factory function create_caption_generator()
+│   ├── ai_captioning_blip2.py         # Blip2CaptionGenerator (BLIP-2 model)
+│   ├── ai_captioning_llava.py         # LlavaCaptionGenerator (LLaVA model)
+│   ├── exif_reader.py                 # EXIF metadata extraction
+│   └── file_analyzer.py               # Orchestrates per-file analysis
 ├── fileops/
-│   ├── file_utils.py              # File copy and path utilities
-│   └── folder_builder.py         # Output folder creation and naming
+│   ├── file_utils.py                  # File copy and path utilities
+│   └── folder_builder.py              # Output folder creation and naming
 ├── language/
-│   ├── caption_comparer.py        # Semantic caption similarity (Sentence-Transformer)
-│   ├── keyword_generator.py       # Keyword extraction from captions
-│   └── keyword_reducer.py         # Deduplication and filtering of keywords
+│   ├── caption_comparer.py            # Semantic caption similarity (Sentence-Transformer)
+│   ├── keyword_generator.py           # Keyword extraction from captions
+│   └── keyword_reducer.py             # Deduplication and filtering of keywords
 └── services/
-    ├── geocoding.py               # Reverse geocoding via OpenStreetMap Nominatim
-    └── translate.py              # Keyword translation via Google Translate
+    ├── geocoding.py                   # Reverse geocoding via OpenStreetMap Nominatim
+    └── translate.py                   # Keyword translation via Google Translate
 ```
 
 ## AI Models
