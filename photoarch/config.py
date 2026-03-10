@@ -55,9 +55,9 @@ FOLDER_MAX_TIME_DIFFERENCE_HOURS: Final = 2  # Maximum time difference in hours 
 FOLDER_MAX_DIFFERENCE_SCORE_THRESHOLD: Final = 0.58  # Maximum difference score before starting a new folder (0.0-1.0)
 
 # Weights for foldering criteria (must sum to 1.0)
-FILE_DIFF_SCORE_TIME_WEIGHT: Final = 0.39 
-FILE_DIFF_SCORE_LOCATION_WEIGHT: Final = 0.39
-FILE_DIFF_SCORE_CAPTION_WEIGHT: Final = 0.22
+FILE_DIFF_SCORE_TIME_WEIGHT: Final = 0.375
+FILE_DIFF_SCORE_LOCATION_WEIGHT: Final = 0.375
+FILE_DIFF_SCORE_CAPTION_WEIGHT: Final = 0.25
 
 # Adjusted weights when GPS data is missing (must sum to 1.0)
 FILE_DIFF_SCORE_TIME_WEIGHT_NO_GPS: Final = 0.62

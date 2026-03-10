@@ -78,31 +78,47 @@ class TestFolderBuilder(unittest.TestCase):
         current = FileInfo(path=Path('b.mp4'), date=datetime(2024,1,1,0,1), lat=0.0, lon=0.0, keywords=["foo"], camera_model=None, address=None)
         self.assertFalse(folder_builder.is_new_folder([last], current, self.context))
 
-    def test_is_new_folder_real_world_scenario(self):
-        # Real-world scenario with guinea pig photo and people photo
-        # last_info: 2026-02-01T13:37:03, Neubau (1070), man and woman posing
-        # current_info: 2026-02-01T14:04:58, Liesing (1230), guinea pigs in snow
-        # Time difference: ~27.9 minutes, GPS: ~7.2km, Keywords: completely different
-                
+    def test_is_new_folder_real_world_scenario_guinea_pig(self):
+        # Real-world scenario with guinea pig photo and people photo                
         last_info = FileInfo(
             path=Path("PXL_20260201_123703569.jpg"),
             date=datetime(2026, 2, 1, 13, 37, 3, 569000, tzinfo=timezone(timedelta(hours=1))),
-            lat=48.201975000000004,
-            lon=16.351605555555558,
+            lat=45.301975000000004,
+            lon=13.451605555555558,
             caption="a man and a woman posing for a photo on a city street"
         )
 
         current_info = FileInfo(
             path=Path("PXL_20260201_140458821.jpg"),
             date=datetime(2026, 2, 1, 14, 4, 58, 821000, tzinfo=timezone(timedelta(hours=1))),
-            lat=48.15419722222222,
-            lon=16.307141666666666,
+            lat=45.25419722222222,
+            lon=13.407141666666666,
             caption="two guinea pigs lying in the snow in front of a red shed"
         )
                 
-        # Should trigger new folder: different location (~7.2km) + different captions
-        # Time: ~27.9 min (~0.06 score), GPS: ~7.2km (0.4 score), captions completely different (high keyword score)
-        # Total score exceeds 0.6 threshold
+        # Should trigger new folder
+        result = folder_builder.is_new_folder([last_info], current_info, self.context)
+        self.assertTrue(result)
+
+    def test_is_new_folder_real_world_scenario(self):
+        # Real-world scenario with red carpet photo and a bridge photo                
+        last_info = FileInfo(
+            path=Path("PXL_20260306_142842399.jpg"),
+            date=datetime(2026, 3, 6, 14, 28, 42, 399000, tzinfo=timezone(timedelta(hours=1))),
+            lat=45.35678055555556,
+            lon=13.621225,
+            caption="a bridge over a street"
+        )
+
+        current_info = FileInfo(
+            path=Path("PXL_20260306_204020679.jpg"),
+            date=datetime(2026, 3, 6, 20, 40, 20, 679000, tzinfo=timezone(timedelta(hours=1))),
+            lat=45.354174999999995,
+            lon=13.607152777777777,
+            caption="a woman talking to an interviewer on the red carpet"
+        )
+                
+        # Should trigger new folder
         result = folder_builder.is_new_folder([last_info], current_info, self.context)
         self.assertTrue(result)
 

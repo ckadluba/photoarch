@@ -63,12 +63,12 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo, ai_models_
         location_weight = FILE_DIFF_SCORE_LOCATION_WEIGHT_NO_GPS
         caption_weight = FILE_DIFF_SCORE_CAPTION_WEIGHT_NO_GPS
 
-    # Calculate time difference score (normalized by threshold, weight: 0.39)
+    # Calculate time difference score (normalized by threshold, multiplied by weight)
     last_date, current_date = normalize_datetimes(last_info.date, current_info.date)
     time_delta_hours = abs((current_date - last_date).total_seconds()) / 3600
     time_score = min(time_delta_hours / FOLDER_MAX_TIME_DIFFERENCE_HOURS, 1.0) * time_weight
 
-    # Calculate GPS distance score (normalized by threshold, weight: 0.39)
+    # Calculate GPS distance score (normalized by threshold, multiplied by weight)
     location_distance = 0.0
     location_score = 0.0
     if last_info.lat is not None and last_info.lon is not None and current_info.lat is not None and current_info.lon is not None:
@@ -79,7 +79,7 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo, ai_models_
     else:
         logger.debug(f"is_new_folder: missing GPS data, last_info.lat={last_info.lat}, last_info.lon={last_info.lon}, current_info.lat={current_info.lat}, current_info.lon={current_info.lon}, skipping GPS distance check")
      
-    # Calculate keyword difference score (lowest weight: 0.22)
+    # Calculate keyword difference score (multiplied by weight)
     caption_difference_score = 0.0
     caption_difference = 0.0
     last_keywords = set(last_info.keywords)
