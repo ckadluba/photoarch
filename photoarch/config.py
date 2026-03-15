@@ -13,6 +13,7 @@ VIDEO_FILE_EXTENSIONS: Final = {".mp4"}
 IMAGE_CAPTIONING_MODEL_NAME_BLIP2: Final = "Salesforce/blip2-flan-t5-xl"
 IMAGE_CAPTIONING_MODEL_NAME_LLAVA: Final = "llava-hf/llava-1.5-7b-hf"
 SEMANTIC_SIMILARITY_MODEL_NAME: Final = "paraphrase-multilingual-MiniLM-L12-v2"
+IMAGE_EMBEDDING_MODEL_NAME: Final = "clip-ViT-B-32"
 MODEL_CACHE_DIR: Final = "./models"
 
 # English stopwords for keyword generation

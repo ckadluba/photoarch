@@ -15,6 +15,7 @@ from ..services.translate import translate_english_to_german
 from ..language.keyword_generator import get_keywords_from_caption
 from .exif_reader import get_exif_data_from_file, get_date_from_exif_data, get_camera_from_exif_data, get_gps_from_exif_data
 from .caption_generator_factory import create_caption_generator
+from .image_embedder import get_image_embedding
 
 
 # Initialization
@@ -105,6 +106,7 @@ def analyze_file(file_path: Path, ai_models_context: AiModelsContext | None = No
         file_info.caption_german = caption_german
         file_info.keywords = keywords
         file_info.keywords_german = keywords_german
+        file_info.embedding = get_image_embedding(file_path, ai_models_context)
         
     elif file_path.suffix.lower() in VIDEO_FILE_EXTENSIONS:
         file_info.keywords.append(KEYWORD_GENERIC_VIDEO)

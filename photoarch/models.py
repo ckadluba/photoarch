@@ -87,6 +87,10 @@ class FileInfo:
     keywords_german: list[str] = field(default_factory=list)
     caption: str = ""
     caption_german: str = ""
+    embedding: Optional[list[float]] = field(
+        default=None,
+        metadata=config(exclude=lambda _: True)
+    )
 
     skip: bool = field(
         default=False,
