@@ -43,4 +43,5 @@ def calculate_image_difference(emb1: list[float], emb2: list[float]) -> float:
     t1 = torch.tensor(emb1)
     t2 = torch.tensor(emb2)
     similarity = util.cos_sim(t1, t2).item()
-    return 1.0 - (1.0 + similarity) / 2.0
+    # return 1.0 - (1.0 + similarity) / 2.0 # Convert similarity (-1.0 to 1.0) to difference (0.0 to 1.0)
+    return similarity
