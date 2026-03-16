@@ -37,11 +37,13 @@ def calculate_image_difference(emb1: list[float], emb2: list[float]) -> float:
     Calculate the difference between two pre-computed image embeddings.
 
     Returns:
-        float: Difference score from 0.0 (identical) to 1.0 (completely different).
+        float: Difference score from 0.0 (identical) to 1.0 (different).
     """
     import torch
     t1 = torch.tensor(emb1)
     t2 = torch.tensor(emb2)
     similarity = util.cos_sim(t1, t2).item()
-    # return 1.0 - (1.0 + similarity) / 2.0 # Convert similarity (-1.0 to 1.0) to difference (0.0 to 1.0)
-    return similarity
+
+    # For image embeddings, we might want to treat higher similarity as more similar, 
+    # so instead of a scaled score, we can return similarity directly and cut off negative values.
+    return 1.0 - max(0.0, similarity)

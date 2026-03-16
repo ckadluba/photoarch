@@ -116,22 +116,22 @@ class TestCalculateImageDifference(unittest.TestCase):
         return v
 
     def test_identical_embeddings_return_similarity_one(self):
-        """Identical embeddings should return cosine similarity 1.0."""
+        """Identical embeddings should return difference 0.0."""
         v = [1.0, 0.0, 0.0]
         score = calculate_image_difference(v, v)
-        self.assertAlmostEqual(score, 1.0, places=5)
-
-    def test_orthogonal_embeddings_return_zero(self):
-        """Orthogonal embeddings should return cosine similarity 0.0."""
-        score = calculate_image_difference(self._unit(3, 0), self._unit(3, 1))
         self.assertAlmostEqual(score, 0.0, places=5)
 
+    def test_orthogonal_embeddings_return_zero(self):
+        """Orthogonal embeddings should return difference 1.0."""
+        score = calculate_image_difference(self._unit(3, 0), self._unit(3, 1))
+        self.assertAlmostEqual(score, 1.0, places=5)
+
     def test_opposite_embeddings_return_minus_one(self):
-        """Opposite embeddings should return cosine similarity -1.0."""
+        """Opposite embeddings (negative similarity) should be clamped to difference 1.0."""
         v = [1.0, 0.0, 0.0]
         neg_v = [-1.0, 0.0, 0.0]
         score = calculate_image_difference(v, neg_v)
-        self.assertAlmostEqual(score, -1.0, places=5)
+        self.assertAlmostEqual(score, 1.0, places=5)
 
     def test_returns_float(self):
         """Return value must be a plain Python float."""
@@ -139,14 +139,14 @@ class TestCalculateImageDifference(unittest.TestCase):
         self.assertIsInstance(score, float)
 
     def test_result_in_valid_range(self):
-        """Score must be within [-1.0, 1.0] for arbitrary unit vectors."""
+        """Score must be within [0.0, 1.0] for arbitrary vectors."""
         import random
         random.seed(42)
         for _ in range(20):
             v1 = [random.gauss(0, 1) for _ in range(64)]
             v2 = [random.gauss(0, 1) for _ in range(64)]
             score = calculate_image_difference(v1, v2)
-            self.assertGreaterEqual(score, -1.0)
+            self.assertGreaterEqual(score, 0.0)
             self.assertLessEqual(score, 1.0)
 
     def test_symmetry(self):
