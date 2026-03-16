@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 # Code
 
-def main(input_dir: str, output_dir: str, input_files_order: str, dry_run: bool = False, folder_name_language: str = "german", captioning_ai_model: str = "blip-2"):
+def main(input_dir: str, output_dir: str, input_files_order: str, dry_run: bool = False, folder_name_language: str = "german", captioning_ai_model: str = "blip-2", use_image_difference: bool = False):
     input_path = Path(input_dir)
     output_path = Path(output_dir)
 
@@ -26,13 +26,13 @@ def main(input_dir: str, output_dir: str, input_files_order: str, dry_run: bool 
         logger.error(f"Input directory {input_path} does not exist or is not a directory.")
         return
 
-    folder_infos = analyze_files(input_path, output_path, input_files_order, folder_name_language, captioning_ai_model)
+    folder_infos = analyze_files(input_path, output_path, input_files_order, folder_name_language, captioning_ai_model, use_image_difference)
     copy_files(folder_infos, input_path, output_path, dry_run)
 
     logger.info("Finished.")
 
 
-def analyze_files(input_path: Path, output_path: Path, input_files_order: str, folder_name_language: str = "german", captioning_ai_model: str = "blip-2") -> list[FolderInfo]:
+def analyze_files(input_path: Path, output_path: Path, input_files_order: str, folder_name_language: str = "german", captioning_ai_model: str = "blip-2", use_image_difference: bool = False) -> list[FolderInfo]:
     logger.info(f"Analyzing files in {input_path} …")
     if input_files_order == "filename":
         files = sorted(input_path.iterdir(), key=lambda f: f.name)
@@ -62,7 +62,7 @@ def analyze_files(input_path: Path, output_path: Path, input_files_order: str, f
         logger.info(f"Analysis took {last_analysis_duration_seconds:.1f} seconds")
 
         # Create a new folder and finish the previous one if the file is different enough
-        if is_new_folder(file_infos, file_info, ai_models_context):
+        if is_new_folder(file_infos, file_info, ai_models_context, use_image_difference):
             finish_last_folder_info(folder_infos, file_infos, output_path, ai_models_context, folder_name_language)
             assert file_info.date is not None  # Date is guaranteed to be set for non-skipped files
             create_folder_info(folder_infos, file_info.date)
@@ -133,10 +133,16 @@ def cli():
         choices=["blip-2", "llava"],
         help="AI model used for image captioning (default: blip-2)",
     )
+    parser.add_argument(
+        "--use-image-difference",
+        action="store_true",
+        default=False,
+        help="Use pre-computed image embedding similarity instead of caption text similarity for the difference score",
+    )
     args = parser.parse_args()
 
     setup_logging(args.log_level)
-    main(args.input, args.output, input_files_order=args.input_files_order, dry_run=args.dry_run, folder_name_language=args.folder_name_language, captioning_ai_model=args.captioning_ai_model)
+    main(args.input, args.output, input_files_order=args.input_files_order, dry_run=args.dry_run, folder_name_language=args.folder_name_language, captioning_ai_model=args.captioning_ai_model, use_image_difference=args.use_image_difference)
 
 if __name__ == "__main__":
     cli()

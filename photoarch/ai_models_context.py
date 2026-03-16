@@ -7,6 +7,7 @@ if TYPE_CHECKING:
 
 
 class AiModelsContext:
-    def __init__(self, captioner: Optional[CaptionGenerator] = None, sentence_transformer: Optional[SentenceTransformer] = None):
+    def __init__(self, captioner: Optional[CaptionGenerator] = None, sentence_transformer: Optional[SentenceTransformer] = None, clip_model: Optional[SentenceTransformer] = None):
         self.captioner = captioner
         self.sentence_transformer = sentence_transformer
+        self.clip_model = clip_model

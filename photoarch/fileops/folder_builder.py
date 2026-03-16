@@ -7,6 +7,7 @@ from ..config import *
 from ..models import FolderInfo, FileInfo
 from ..ai_models_context import AiModelsContext
 from ..language.caption_comparer import calculate_caption_difference
+from ..analysis.image_embedder import calculate_image_difference
 from ..language.keyword_reducer import select_top_words
 
 
@@ -28,7 +29,7 @@ def create_folder_info(folder_infos: list[FolderInfo], start_date: datetime):
     )
     folder_infos.append(folder_info)
 
-def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo, ai_models_context: AiModelsContext) -> bool:
+def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo, ai_models_context: AiModelsContext, use_image_difference: bool = False) -> bool:
     """Heuristics to determine if a new folder should be started based on last and current file info
     
          1. Always start a new folder if no previous files exist
@@ -36,7 +37,8 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo, ai_models_
          3. Start a new folder based on weighted difference score:
              - Time difference (highest weight)
              - GPS distance (medium weight)
-             - Caption difference (lowest weight)
+             - Caption/image difference (lowest weight): either caption text similarity (default)
+               or pre-computed image embedding similarity (when use_image_difference=True)
              3.1 If the current or the last file has only KEYWORD_GENERIC_VIDEO as a keyword, 
                  captions are not considered in the score, since videos often have no meaningful captions 
                  from the AI analysis and would otherwise cause too many folder splits."""
@@ -82,19 +84,23 @@ def is_new_folder(file_infos: list[FileInfo], current_info: FileInfo, ai_models_
     # Calculate keyword difference score (multiplied by weight)
     caption_difference_score = 0.0
     caption_difference = 0.0
+    image_difference = 0.0
     last_keywords = set(last_info.keywords)
     current_keywords = set(current_info.keywords)
     # Special rule: ignore keywords if either file only has KEYWORD_GENERIC_VIDEO
     if last_keywords != {KEYWORD_GENERIC_VIDEO} and current_keywords != {KEYWORD_GENERIC_VIDEO}:
+        if last_info.embedding is not None and current_info.embedding is not None:
+            image_difference = calculate_image_difference(last_info.embedding, current_info.embedding)
         caption_difference = calculate_caption_difference(last_info.caption, current_info.caption, ai_models_context)
-        caption_difference_score = caption_difference * caption_weight
+        active_difference = image_difference if use_image_difference else caption_difference
+        caption_difference_score = active_difference * caption_weight
 
     # Calculate total difference score (max: 1.0)
     difference_score = time_score + location_score + caption_difference_score
     
     # Start new folder if difference score >= threshold (roughly equivalent to "2 of 3" criteria)
     start_new_folder = difference_score >= FOLDER_MAX_DIFFERENCE_SCORE_THRESHOLD
-    logger.debug(f"is_new_folder: decision, time_diff={time_delta_hours:.2f}h (sc={time_score:.2f}, wh={time_weight:.2f}), geo_diff={location_distance:.2f}m (sc={location_score:.2f}, wh={location_weight:.2f}), caption_diff={caption_difference:.2f} (sc={caption_difference_score:.2f}, wh={caption_weight:.2f}), total_score={difference_score:.2f}, start_new_folder={start_new_folder}")  
+    logger.debug(f"is_new_folder: decision, time_diff={time_delta_hours:.2f}h (sc={time_score:.2f}, wh={time_weight:.2f}), geo_diff={location_distance:.2f}m (sc={location_score:.2f}, wh={location_weight:.2f}), caption_diff={caption_difference:.2f}, image_diff={image_difference:.2f} (active={'image' if use_image_difference else 'caption'}, sc={caption_difference_score:.2f}, wh={caption_weight:.2f}), total_score={difference_score:.2f}, start_new_folder={start_new_folder}")  
     
     return start_new_folder
 

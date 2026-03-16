@@ -14,6 +14,7 @@ Photo Archive Organizer is a complete Python module/package for automatically or
   
   Both models run fully offline. The selected model is automatically downloaded on first use and cached locally in the `models/` directory.
 - **Semantic Caption Comparison**: Uses a Sentence-Transformer model (paraphrase-multilingual-MiniLM-L12-v2) to detect semantically similar image captions for intelligent photo grouping. This allows recognition of related concepts even when exact words differ.
+- **Image Embedding Comparison** *(optional)*: Instead of comparing text captions, computes CLIP embeddings directly from raw image pixels and uses the visual similarity between images for grouping. Enable with `--use-image-difference`.
 - **Geolocation Processing**: Extracts GPS coordinates from EXIF data and performs reverse geocoding to determine locations
 - **Intelligent Grouping**: Automatically groups photos into folders based on:
   - Temporal proximity (time between photos)
@@ -118,6 +119,7 @@ main.run(input_dir="/path/to/photos", output_dir="/path/to/sorted")
 - `--dry-run` - Analyze photos and print the result folder tree without copying any files
 - `--folder-name-language` - Language used for keywords in folder names: `german` or `english` (default: `german`). This only affects folder names — metadata JSON files always contain both the original English and translated German keywords and captions regardless of this setting.
 - `--captioning-ai-model` - AI model used for image captioning: `blip-2` or `llava` (default: `blip-2`). See [AI Models](#ai-models) for details.
+- `--use-image-difference` - Use visual image similarity (CLIP embeddings computed from pixel data) instead of semantic caption similarity for the content difference score. See [Image Embedding Comparison](#image-embedding-comparison) for details.
 
 ### Output Structure
 
@@ -185,7 +187,7 @@ Each photo has an accompanying JSON metadata file containing:
    - Same month/year
    - Geographic proximity (within `FOLDER_MAX_DISTANCE_METERS`)
    - Temporal proximity (within `FOLDER_MAX_TIME_DIFFERENCE_HOURS`)
-   - Content similarity (semantically similar captions detected by Sentence-Transformer model)
+   - Content similarity: semantically similar captions (Sentence-Transformer model, default) or visually similar images (CLIP model, with `--use-image-difference`)
 
 3. **File Organization**: Photos are copied to the output directory with:
    - Hierarchical folder structure (Year/Month/Event)
@@ -210,11 +212,12 @@ The module caches analysis results in `.photoarch/` to speed up repeated runs. D
 ### Notes
 
 
-- Only `.jpg` images and `.mp4` videos are processed
+- Only `.jpg` and `.png` images and `.mp4` videos are processed
 - Reverse geocoding uses OpenStreetMap Nominatim API (rate-limited)
 - Keyword translation uses Google Translate API (may be rate-limited)
 - AI image captioning happens offline with a locally downloaded model (BLIP-2 or LLaVA)
 - Semantic caption comparison uses the offline Sentence-Transformer model (paraphrase-multilingual-MiniLM-L12-v2)
+- With `--use-image-difference`, image similarity is computed via the offline CLIP model (clip-ViT-B-32). Both scores are always logged at DEBUG level so the two approaches can be compared.
 - Original files are **copied**, not moved (originals remain in input directory)
 - The module works with photos and videos from different cameras and phones as long as they contain EXIF data. It was mainly tested with Google Pixel 8 and Samsung Galaxy A15 phones.
 
@@ -235,7 +238,8 @@ photoarch/
 │   ├── ai_captioning_blip2.py         # Blip2CaptionGenerator (BLIP-2 model)
 │   ├── ai_captioning_llava.py         # LlavaCaptionGenerator (LLaVA model)
 │   ├── exif_reader.py                 # EXIF metadata extraction
-│   └── file_analyzer.py               # Orchestrates per-file analysis
+│   ├── file_analyzer.py               # Orchestrates per-file analysis
+│   └── image_embedder.py              # CLIP image embedding and visual similarity
 ├── fileops/
 │   ├── file_utils.py                  # File copy and path utilities
 │   └── folder_builder.py              # Output folder creation and naming
@@ -269,6 +273,24 @@ python -m photoarch.main --captioning-ai-model llava
 ### Semantic Caption Comparison
 
 For grouping photos by content similarity, the [paraphrase-multilingual-MiniLM-L12-v2](https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2) Sentence-Transformer model is used. This model is always active and cannot be changed via command-line parameters.
+
+### Image Embedding Comparison
+
+As an alternative to caption-based grouping, the `--use-image-difference` flag enables direct visual similarity between images using [CLIP (clip-ViT-B-32)](https://huggingface.co/sentence-transformers/clip-ViT-B-32). Instead of comparing generated text captions, the model encodes the raw pixel data of each image into a vector embedding. The cosine distance between the embeddings of two images is then used as the content difference score.
+
+This approach can be more robust for photos where the AI captioning model produces poor or generic descriptions (e.g. very dark, blurry, or abstract images).
+
+Both the caption difference score and the image difference score are always calculated and logged at `DEBUG` level:
+```
+is_new_folder: decision, ..., caption_diff=0.12, image_diff=0.45 (active=image, sc=0.11, wh=0.25), ...
+```
+
+Enable with:
+```bash
+python -m photoarch.main --use-image-difference
+```
+
+The CLIP model is downloaded automatically on first use and cached in the `models/` directory.
 
 ## Extending the Module
 
