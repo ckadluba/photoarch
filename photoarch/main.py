@@ -3,6 +3,7 @@ import shutil
 from pathlib import Path
 from datetime import datetime, timedelta
 import argparse
+from collections.abc import Sequence
 
 from .models import FolderInfo, FileInfo
 from .ai_models_context import AiModelsContext
@@ -18,18 +19,19 @@ logger = logging.getLogger(__name__)
 
 # Code
 
-def main(input_dir: str, output_dir: str, input_files_order: str, dry_run: bool = False, folder_name_language: str = "german", captioning_ai_model: str = "blip-2", use_image_difference: bool = False):
+def main(input_dir: str, output_dir: str, input_files_order: str, dry_run: bool = False, folder_name_language: str = "german", captioning_ai_model: str = "blip-2", use_image_difference: bool = False) -> int:
     input_path = Path(input_dir)
     output_path = Path(output_dir)
 
     if not input_path.exists() or not input_path.is_dir():
         logger.error(f"Input directory {input_path} does not exist or is not a directory.")
-        return
+        return 2
 
     folder_infos = analyze_files(input_path, output_path, input_files_order, folder_name_language, captioning_ai_model, use_image_difference)
     copy_files(folder_infos, input_path, output_path, dry_run)
 
     logger.info("Finished.")
+    return 0
 
 
 def analyze_files(input_path: Path, output_path: Path, input_files_order: str, folder_name_language: str = "german", captioning_ai_model: str = "blip-2", use_image_difference: bool = False) -> list[FolderInfo]:
@@ -76,7 +78,7 @@ def analyze_files(input_path: Path, output_path: Path, input_files_order: str, f
     return folder_infos
 
 
-def copy_files(folder_infos: list[FolderInfo], input_path: Path, output_path: Path, dry_run: bool):
+def copy_files(folder_infos: list[FolderInfo], input_path: Path, output_path: Path, dry_run: bool) -> None:
     if dry_run:
         logger.info("Dry run — no files will be copied. Result tree:")
     else:
@@ -98,7 +100,7 @@ def copy_files(folder_infos: list[FolderInfo], input_path: Path, output_path: Pa
                 meta_file_dst_path = folder_meta_path / file_meta_name
                 shutil.copy(meta_file_src_path, meta_file_dst_path)
 
-def cli():
+def cli(argv: Sequence[str] | None = None) -> int:
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Sort and organize photos by date, location, and AI-generated content.")
     parser.add_argument("--input", type=str, default=str(INPUT_DIR), help=f"Input directory containing photos (default: {INPUT_DIR})")
@@ -139,10 +141,10 @@ def cli():
         default=False,
         help="Use pre-computed image embedding similarity instead of caption text similarity for the difference score",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     setup_logging(args.log_level)
-    main(args.input, args.output, input_files_order=args.input_files_order, dry_run=args.dry_run, folder_name_language=args.folder_name_language, captioning_ai_model=args.captioning_ai_model, use_image_difference=args.use_image_difference)
+    return main(args.input, args.output, input_files_order=args.input_files_order, dry_run=args.dry_run, folder_name_language=args.folder_name_language, captioning_ai_model=args.captioning_ai_model, use_image_difference=args.use_image_difference)
 
 if __name__ == "__main__":
-    cli()
+    raise SystemExit(cli())

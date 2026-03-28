@@ -102,14 +102,19 @@ python -m photoarch.main
 ### Custom Input/Output Directories
 Specify custom input and output directories:
 ```bash
-python -m photoarch.main --input /path/to/photos --output /path/to/sorted
+python -m photoarch --input /path/to/photos --output /path/to/sorted
 ```
 
 ### Using as a Python Module
 You can also use the module in your own scripts:
 ```python
-from photoarch import main
-main.run(input_dir="/path/to/photos", output_dir="/path/to/sorted")
+from photoarch import run
+
+exit_code = run(
+    input_dir="/path/to/photos",
+    output_dir="/path/to/sorted",
+    input_files_order="filename",
+)
 ```
 
 ### Command-Line Arguments

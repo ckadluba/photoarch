@@ -12,6 +12,20 @@ authors = [
     {name = "Christian Kadluba"}
 ]
 requires-python = ">=3.14"
+keywords = ["photo", "organizer", "exif", "ai", "archiving", "cli"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities"
+]
 
 dependencies = [
     "accelerate",
@@ -39,5 +53,16 @@ dev = [
 [project.scripts]
 photoarch = "photoarch.main:cli"
 
+[project.urls]
+Homepage = "https://github.com/ckadluba/photoarch"
+Repository = "https://github.com/ckadluba/photoarch"
+Issues = "https://github.com/ckadluba/photoarch/issues"
+
+[tool.setuptools]
+license-files = ["LICENSE"]
+
 [tool.setuptools.packages.find]
 include = ["photoarch*"]
+
+[tool.setuptools.package-data]
+photoarch = ["py.typed"]
