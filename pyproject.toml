@@ -58,7 +58,7 @@ Homepage = "https://github.com/ckadluba/photoarch"
 Repository = "https://github.com/ckadluba/photoarch"
 Issues = "https://github.com/ckadluba/photoarch/issues"
 
-[tool.setuptools]
+[project]
 license-files = ["LICENSE"]
 
 [tool.setuptools.packages.find]
