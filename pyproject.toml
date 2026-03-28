@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "AI-powered photo organizer by date, location and content."
 readme = "README.md"
 license = "Apache-2.0"
+license-files = ["LICENSE"]
 authors = [
     {name = "Christian Kadluba"}
 ]
@@ -57,9 +58,6 @@ photoarch = "photoarch.main:cli"
 Homepage = "https://github.com/ckadluba/photoarch"
 Repository = "https://github.com/ckadluba/photoarch"
 Issues = "https://github.com/ckadluba/photoarch/issues"
-
-[project]
-license-files = ["LICENSE"]
 
 [tool.setuptools.packages.find]
 include = ["photoarch*"]
