@@ -84,7 +84,25 @@ To run from the command line:
 python -m photoarch.main
 ```
 
-### 4. Directory Structure
+### 4. GPU Acceleration
+
+The module automatically detects and uses available GPUs for AI model inference, significantly speeding up image analysis.
+
+No configuration is required — the module automatically detects the best available device at runtime:
+
+1. **Apple Silicon (MPS)**: Fast, low power consumption — ideal for MacBooks
+2. **NVIDIA CUDA**: High throughput for large GPU memory
+3. **CPU**: Fallback for compatibility
+
+You can see which device is being used by checking the log output:
+
+```
+INFO:photoarch.device_utils:Using Apple Metal Performance Shaders (MPS) for GPU acceleration
+```
+
+This message is logged automatically at INFO level when the module starts.
+
+### 5. Directory Structure
 Ensure the following directories exist (they will be created automatically if missing):
   - `input_photos/` - Place your photos here (or specify alternative path using `--input` command line parameter)
   - `sorted_photos/` - Output directory (will be created; can also be specified using `--output`)
@@ -216,8 +234,8 @@ The module caches analysis results in `.photoarch/` to speed up repeated runs. D
 
 ### Notes
 
-
 - Only `.jpg` and `.png` images and `.mp4` videos are processed
+- **GPU Acceleration**: The module automatically detects and uses available GPUs (Apple Silicon MPS, NVIDIA CUDA) for AI model inference. No configuration required. See [GPU Acceleration](#4-gpu-acceleration-optional-but-recommended) for details and performance benchmarks.
 - Reverse geocoding uses OpenStreetMap Nominatim API (rate-limited)
 - Keyword translation uses Google Translate API (may be rate-limited)
 - AI image captioning happens offline with a locally downloaded model (BLIP-2 or LLaVA)
@@ -234,6 +252,7 @@ The module is organized as follows:
 photoarch/
 ├── ai_models_context.py               # Runtime container for loaded AI model instances
 ├── config.py                          # Configuration constants
+├── device_utils.py                    # GPU device detection and selection (MPS, CUDA, CPU)
 ├── logging_config.py                  # Logging setup
 ├── main.py                            # Entry point for CLI and module usage
 ├── models.py                          # Shared data model classes

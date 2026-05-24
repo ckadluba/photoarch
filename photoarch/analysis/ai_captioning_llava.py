@@ -4,6 +4,7 @@ import torch
 from transformers import LlavaForConditionalGeneration, AutoProcessor
 
 from ..config import IMAGE_CAPTIONING_MODEL_NAME_LLAVA, MODEL_CACHE_DIR
+from ..device_utils import get_optimal_device, get_device_dtype
 from .caption_generator import CaptionGenerator
 
 
@@ -11,14 +12,20 @@ logger = logging.getLogger(__name__)
 
 
 class LlavaCaptionGenerator(CaptionGenerator):
-    def __init__(self, device: str = "cpu"):
-        self.device = device
+    def __init__(self, device: str = "auto"):
+        # Auto-detect optimal device if "auto" is specified
+        if device == "auto":
+            self.device, self.dtype = get_optimal_device()
+        else:
+            self.device = device
+            self.dtype = get_device_dtype(device)
+        
         self._model = None
         self._processor = None
 
     def _load_model(self):
         if self._model is None:
-            logger.info("Loading LLaVA Model …")
+            logger.info(f"Loading LLaVA Model on {self.device} …")
             self._processor = AutoProcessor.from_pretrained(
                 IMAGE_CAPTIONING_MODEL_NAME_LLAVA,
                 cache_dir=MODEL_CACHE_DIR
@@ -26,9 +33,12 @@ class LlavaCaptionGenerator(CaptionGenerator):
             self._model = LlavaForConditionalGeneration.from_pretrained(
                 IMAGE_CAPTIONING_MODEL_NAME_LLAVA,
                 cache_dir=MODEL_CACHE_DIR,
-                torch_dtype=torch.float16,
+                torch_dtype=self.dtype,
                 low_cpu_mem_usage=True,
             )
+            
+            # Move model to device
+            self._model = self._model.to(self.device)
             self._model.eval()
 
     def get_caption_for_image_file(self, file_path) -> str:

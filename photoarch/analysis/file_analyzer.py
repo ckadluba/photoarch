@@ -97,7 +97,7 @@ def analyze_file(file_path: Path, ai_models_context: AiModelsContext | None = No
             ai_models_context = AiModelsContext()
         if ai_models_context.captioner is None:
             logger.info(f"Initializing captioner ({captioning_ai_model}) …")
-            ai_models_context.captioner = create_caption_generator(captioning_ai_model, device="cpu")
+            ai_models_context.captioner = create_caption_generator(captioning_ai_model, device="auto")
         caption = ai_models_context.captioner.get_caption_for_image_file(file_path)
         keywords = get_keywords_from_caption(caption, STOPWORDS)
         caption_german = translate_english_to_german(caption)
