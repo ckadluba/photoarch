@@ -132,7 +132,7 @@ def cli(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--captioning-ai-model",
         default="blip-2",
-        choices=["blip-2", "llava"],
+        choices=["blip-2", "llava", "git"],
         help="AI model used for image captioning (default: blip-2)",
     )
     parser.add_argument(
