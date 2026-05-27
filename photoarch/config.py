@@ -27,7 +27,7 @@ STOPWORDS: Final = {
     "now", "it", "is", "are", "was", "were", "be", "been", "being", "have", "has", 
     "having", "do", "does", "did", "doing", "his", "her", "its", "they", "them", "this", 
     "that", "hers", "ours", "yours", "their", "what", "which", "who", "whom", "whose", "my",
-    "[", "unused0", "]" # Placeholder token used in MS GIT captions, should be ignored in keyword extraction
+    "[", "unused0", "]", "]," # Placeholder token used in MS GIT captions, should be ignored in keyword extraction
 }
 
 # German stopwords for keyword generation
@@ -45,13 +45,15 @@ STOPWORDS_GERMAN: Final = {
     "zur", "ins", "vom", "beim", "bei", "über", "unter", "um", "darauf", "darin",
     "ihres", "ihrem", "unser", "unsere", "unserer", "unseres", "euer", "eure", 
     "eurer", "eures",
-    "[unbenutzt0]" # Placeholder token used in MS GIT captions, should be ignored in keyword extraction
+    "[unbenutzt0]", "[unbenutzt0]," # Placeholder token used in MS GIT captions, should be ignored in keyword extraction
 }
 
 KEYWORD_GENERIC_VIDEO: Final = "Video"  # Generic keyword for videos without meaningful AI-generated keywords
 
 # OpenStreetMap Nominatim URL
 NOMINATIM_URL: Final = "https://nominatim.openstreetmap.org/reverse"
+OSM_API_CACHE_DIR: Final = ".photoarch/osm_api_cache"
+GEO_API_CACHE_TOLERANCE_METERS: Final = 50  # Tolerance in meters used when reusing cached reverse geocoding responses
 
 # Foldering heuristics thresholds
 FOLDER_MAX_DISTANCE_METERS: Final = 1500  # Maximum distance in meters to consider photos as belonging to the same folder

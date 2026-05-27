@@ -226,11 +226,16 @@ You can modify constants in [photoarch/config.py](photoarch/config.py) to custom
 - `FOLDER_MAX_DIFFERENCE_SCORE_THRESHOLD` - Maximum overall difference score (default: 0.58)
 - `STOPWORDS` - English stopwords to filter from keywords
 - `STOPWORDS_GERMAN` - German stopwords to filter from keywords
+- `OSM_API_CACHE_DIR` - Directory for cached reverse geocoding responses (default: `.photoarch/osm_api_cache`)
+- `GEO_API_CACHE_TOLERANCE_METERS` - Distance tolerance for reusing cached reverse geocoding results (default: 50m)
 - `FOLDER_FORBIDDEN_CHARS` - Characters to remove from folder names
 
 ### Caching
 
 The module caches analysis results in `.photoarch/` to speed up repeated runs. Delete this folder to force re-analysis of all photos.
+
+- Reverse geocoding results are also cached in `.photoarch/osm_api_cache/`.
+- Cached OSM responses are reused for coordinates within `GEO_API_CACHE_TOLERANCE_METERS` (default: 50m).
 
 ### Notes
 
