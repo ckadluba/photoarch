@@ -15,7 +15,20 @@ class Blip2CaptionGenerator(CaptionGenerator):
     def __init__(self, device: str = "auto"):
         # Auto-detect optimal device if "auto" is specified
         if device == "auto":
-            self.device, self.dtype = get_optimal_device()
+            initial_device, initial_dtype = get_optimal_device()
+            # BLIP-2 works well with all device types, but use MPS if available
+            if initial_device == "mps":
+                logger.info("Using Apple Metal Performance Shaders (MPS) for BLIP-2")
+                self.device = "mps"
+                self.dtype = torch.float32
+            elif initial_device == "cuda":
+                logger.info("Using CUDA for BLIP-2")
+                self.device = "cuda"
+                self.dtype = torch.float16
+            else:
+                logger.info("Using CPU for BLIP-2")
+                self.device = "cpu"
+                self.dtype = torch.float32
         else:
             self.device = device
             self.dtype = get_device_dtype(device)

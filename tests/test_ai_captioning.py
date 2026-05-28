@@ -2,7 +2,7 @@ import pytest
 import torch
 from photoarch.analysis.caption_generator import CaptionGenerator
 from photoarch.analysis.ai_captioning_blip2 import Blip2CaptionGenerator
-from photoarch.analysis.ai_captioning_llava import LlavaCaptionGenerator
+from photoarch.analysis.ai_captioning_git import GitCaptionGenerator
 from photoarch.analysis.caption_generator_factory import create_caption_generator
 from photoarch.device_utils import get_device_dtype
 import os
@@ -23,19 +23,6 @@ def test_blip2_caption_generator_auto_device():
 def test_blip2_caption_generator_cpu_device():
     """Test BLIP2 with explicit CPU device."""
     cg = Blip2CaptionGenerator(device="cpu")
-    assert cg.device == "cpu"
-    assert cg.dtype == torch.float32
-
-def test_llava_caption_generator_auto_device():
-    """Test LLaVA with auto device detection."""
-    cg = LlavaCaptionGenerator(device="auto")
-    assert cg.device in ["mps", "cuda", "cpu"]
-    assert isinstance(cg.dtype, torch.dtype)
-    assert cg.dtype == get_device_dtype(cg.device)
-
-def test_llava_caption_generator_cpu_device():
-    """Test LLaVA with explicit CPU device."""
-    cg = LlavaCaptionGenerator(device="cpu")
     assert cg.device == "cpu"
     assert cg.dtype == torch.float32
 
@@ -64,28 +51,42 @@ def test_create_caption_generator_blip2_auto():
     assert isinstance(cg, CaptionGenerator)
     assert cg.device in ["mps", "cuda", "cpu"]
 
-def test_create_caption_generator_llava():
-    cg = create_caption_generator("llava", device="cpu")
-    assert isinstance(cg, LlavaCaptionGenerator)
+def test_create_caption_generator_git():
+    cg = create_caption_generator("git", device="cpu")
+    assert isinstance(cg, GitCaptionGenerator)
     assert isinstance(cg, CaptionGenerator)
 
-def test_create_caption_generator_llava_auto():
-    """Test factory creates LLaVA with auto device detection."""
-    cg = create_caption_generator("llava", device="auto")
-    assert isinstance(cg, LlavaCaptionGenerator)
+def test_create_caption_generator_git_auto():
+    """Test factory creates GIT with auto device detection."""
+    cg = create_caption_generator("git", device="auto")
+    assert isinstance(cg, GitCaptionGenerator)
     assert isinstance(cg, CaptionGenerator)
     assert cg.device in ["mps", "cuda", "cpu"]
 
+def test_create_caption_generator_default():
+    """Test factory creates GIT (default) when no model specified."""
+    cg = create_caption_generator(device="cpu")
+    assert isinstance(cg, GitCaptionGenerator)
+    assert isinstance(cg, CaptionGenerator)
 
-@pytest.mark.longrunning
-@pytest.mark.skip(reason="LLaVA model download and inference can be very slow")
-def test_llava_get_caption_for_image_file():
-    """LONG RUNNING: Tests LLaVA AI caption generation (model download/inference)"""
-    cg = LlavaCaptionGenerator(device="cpu")
-    test_image = "tests/data/input/PXL_20250708_095842343.jpg"
-    if os.path.exists(test_image):
-        caption = cg.get_caption_for_image_file(test_image)
-        assert isinstance(caption, str)
-        assert len(caption) > 0
-    else:
-        pytest.skip("Test image not found.")
+def test_git_caption_generator_load_model():
+    cg = GitCaptionGenerator(device="cpu")
+    cg._load_model()
+    assert cg._model is not None
+    assert cg._processor is not None
+
+def test_git_caption_generator_auto_device():
+    """Test GIT with auto device detection."""
+    cg = GitCaptionGenerator(device="auto")
+    assert cg.device in ["mps", "cuda", "cpu"]
+    assert isinstance(cg.dtype, torch.dtype)
+    assert cg.dtype == get_device_dtype(cg.device)
+
+def test_git_caption_generator_cpu_device():
+    """Test GIT with explicit CPU device."""
+    cg = GitCaptionGenerator(device="cpu")
+    assert cg.device == "cpu"
+    assert cg.dtype == torch.float32
+
+
+

@@ -11,7 +11,7 @@ VIDEO_FILE_EXTENSIONS: Final = {".mp4"}
 
 # AI Model names and parameters
 IMAGE_CAPTIONING_MODEL_NAME_BLIP2: Final = "Salesforce/blip2-flan-t5-xl"
-IMAGE_CAPTIONING_MODEL_NAME_LLAVA: Final = "llava-hf/llava-1.5-7b-hf"
+IMAGE_CAPTIONING_MODEL_NAME_GIT: Final = "microsoft/git-large-coco"
 SEMANTIC_SIMILARITY_MODEL_NAME: Final = "paraphrase-multilingual-MiniLM-L12-v2"
 IMAGE_EMBEDDING_MODEL_NAME: Final = "clip-ViT-B-32"
 MODEL_CACHE_DIR: Final = "./models"
@@ -25,7 +25,7 @@ STOPWORDS: Final = {
     "same", "so", "than", "too", "very", "can", "will", "just", "don", "should",
     "now", "it", "is", "are", "was", "were", "be", "been", "being", "have", "has", 
     "having", "do", "does", "did", "doing", "his", "her", "its", "they", "them", "this", 
-    "that", "hers", "ours", "yours", "their", "what", "which", "who", "whom", "whose", "my"
+    "that", "hers", "ours", "yours", "their", "what", "which", "who", "whom", "whose", "my",
 }
 
 # German stopwords for keyword generation
@@ -42,13 +42,15 @@ STOPWORDS_GERMAN: Final = {
     "dies", "diese", "dieser", "dieses", "dem", "den", "des", "im", "am", "zum", 
     "zur", "ins", "vom", "beim", "bei", "über", "unter", "um", "darauf", "darin",
     "ihres", "ihrem", "unser", "unsere", "unserer", "unseres", "euer", "eure", 
-    "eurer", "eures"
+    "eurer", "eures",
 }
 
 KEYWORD_GENERIC_VIDEO: Final = "Video"  # Generic keyword for videos without meaningful AI-generated keywords
 
 # OpenStreetMap Nominatim URL
 NOMINATIM_URL: Final = "https://nominatim.openstreetmap.org/reverse"
+OSM_API_CACHE_DIR: Final = ".photoarch/osm_api_cache"
+GEO_API_CACHE_TOLERANCE_METERS: Final = 50  # Tolerance in meters used when reusing cached reverse geocoding responses
 
 # Foldering heuristics thresholds
 FOLDER_MAX_DISTANCE_METERS: Final = 1500  # Maximum distance in meters to consider photos as belonging to the same folder
