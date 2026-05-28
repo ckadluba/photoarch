@@ -26,7 +26,6 @@ STOPWORDS: Final = {
     "now", "it", "is", "are", "was", "were", "be", "been", "being", "have", "has", 
     "having", "do", "does", "did", "doing", "his", "her", "its", "they", "them", "this", 
     "that", "hers", "ours", "yours", "their", "what", "which", "who", "whom", "whose", "my",
-    "[", "unused0", "]", "]," # Placeholder token used in MS GIT captions, should be ignored in keyword extraction
 }
 
 # German stopwords for keyword generation
@@ -44,7 +43,6 @@ STOPWORDS_GERMAN: Final = {
     "zur", "ins", "vom", "beim", "bei", "über", "unter", "um", "darauf", "darin",
     "ihres", "ihrem", "unser", "unsere", "unserer", "unseres", "euer", "eure", 
     "eurer", "eures",
-    "[unbenutzt0]", "[unbenutzt0]," # Placeholder token used in MS GIT captions, should be ignored in keyword extraction
 }
 
 KEYWORD_GENERIC_VIDEO: Final = "Video"  # Generic keyword for videos without meaningful AI-generated keywords

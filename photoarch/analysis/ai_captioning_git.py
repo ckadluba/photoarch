@@ -1,4 +1,5 @@
 import logging
+import re
 from PIL import Image
 import torch
 from transformers import AutoProcessor, AutoModelForCausalLM
@@ -59,6 +60,14 @@ class GitCaptionGenerator(CaptionGenerator):
             self._model.eval()
             logger.info(f"Model loaded and ready on device {self.device}")
 
+    def _clean_caption(self, caption: str) -> str:
+        """Remove placeholder tokens that GIT model sometimes generates (e.g., '[ unused0 ]')."""
+        # Remove patterns like [ unused0 ], [ unused1 ], etc.
+        caption = re.sub(r'\[\s*unused\d+\s*\]', '', caption)
+        # Clean up multiple spaces that may result from removal
+        caption = re.sub(r'\s+', ' ', caption)
+        return caption.strip()
+
     def get_caption_for_image_file(self, file_path) -> str:
         logger.debug(f"Starting caption generation for {file_path}")
         self._load_model()
@@ -85,4 +94,8 @@ class GitCaptionGenerator(CaptionGenerator):
         caption = self._processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
         logger.debug(f"Generated caption: {caption}")
         
-        return caption.strip()
+        # Clean up placeholder tokens
+        caption = self._clean_caption(caption)
+        logger.debug(f"Cleaned caption: {caption}")
+        
+        return caption
