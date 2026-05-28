@@ -3,6 +3,7 @@ import torch
 from photoarch.analysis.caption_generator import CaptionGenerator
 from photoarch.analysis.ai_captioning_blip2 import Blip2CaptionGenerator
 from photoarch.analysis.ai_captioning_llava import LlavaCaptionGenerator
+from photoarch.analysis.ai_captioning_git import GitCaptionGenerator
 from photoarch.analysis.caption_generator_factory import create_caption_generator
 from photoarch.device_utils import get_device_dtype
 import os
@@ -75,6 +76,43 @@ def test_create_caption_generator_llava_auto():
     assert isinstance(cg, LlavaCaptionGenerator)
     assert isinstance(cg, CaptionGenerator)
     assert cg.device in ["mps", "cuda", "cpu"]
+
+def test_create_caption_generator_git():
+    cg = create_caption_generator("git", device="cpu")
+    assert isinstance(cg, GitCaptionGenerator)
+    assert isinstance(cg, CaptionGenerator)
+
+def test_create_caption_generator_git_auto():
+    """Test factory creates GIT with auto device detection."""
+    cg = create_caption_generator("git", device="auto")
+    assert isinstance(cg, GitCaptionGenerator)
+    assert isinstance(cg, CaptionGenerator)
+    assert cg.device in ["mps", "cuda", "cpu"]
+
+def test_create_caption_generator_default():
+    """Test factory creates GIT (default) when no model specified."""
+    cg = create_caption_generator(device="cpu")
+    assert isinstance(cg, GitCaptionGenerator)
+    assert isinstance(cg, CaptionGenerator)
+
+def test_git_caption_generator_load_model():
+    cg = GitCaptionGenerator(device="cpu")
+    cg._load_model()
+    assert cg._model is not None
+    assert cg._processor is not None
+
+def test_git_caption_generator_auto_device():
+    """Test GIT with auto device detection."""
+    cg = GitCaptionGenerator(device="auto")
+    assert cg.device in ["mps", "cuda", "cpu"]
+    assert isinstance(cg.dtype, torch.dtype)
+    assert cg.dtype == get_device_dtype(cg.device)
+
+def test_git_caption_generator_cpu_device():
+    """Test GIT with explicit CPU device."""
+    cg = GitCaptionGenerator(device="cpu")
+    assert cg.device == "cpu"
+    assert cg.dtype == torch.float32
 
 
 @pytest.mark.longrunning

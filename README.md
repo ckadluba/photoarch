@@ -8,8 +8,9 @@ Photo Archive Organizer is a complete Python module/package for automatically or
 
 ### Key Features
 
-- **AI-Powered Content Analysis**: Uses a local AI vision model to generate captions and keywords for images — without cloud access. Two models are supported and can be selected via the `--captioning-ai-model` command-line parameter:
-  - **BLIP-2** (`blip-2`, default): [Salesforce/blip2-flan-t5-xl](https://huggingface.co/Salesforce/blip2-flan-t5-xl) — a fast, lightweight vision-language model. Good quality captions with low memory requirements.
+- **AI-Powered Content Analysis**: Uses a local AI vision model to generate captions and keywords for images — without cloud access. Three models are supported and can be selected via the `--captioning-ai-model` command-line parameter:
+  - **GIT** (`git`, default): [microsoft/git-large-coco](https://huggingface.co/microsoft/git-large-coco) — General Image Tagging model, provides concise but meaningful captions with fast inference. Lightweight memory footprint and good balance between quality and performance.
+  - **BLIP-2** (`blip-2`): [Salesforce/blip2-flan-t5-xl](https://huggingface.co/Salesforce/blip2-flan-t5-xl) — a fast, lightweight vision-language model. Good quality captions with low memory requirements.
   - **LLaVA** (`llava`): [llava-hf/llava-1.5-7b-hf](https://huggingface.co/llava-hf/llava-1.5-7b-hf) — a large multimodal language model that produces richer, more descriptive captions at the cost of higher memory usage and longer inference time.
   
   Both models run fully offline. The selected model is automatically downloaded on first use and cached locally in the `models/` directory.

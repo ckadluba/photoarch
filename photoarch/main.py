@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 # Code
 
-def main(input_dir: str, output_dir: str, input_files_order: str, dry_run: bool = False, folder_name_language: str = "german", captioning_ai_model: str = "blip-2", use_image_difference: bool = False) -> int:
+def main(input_dir: str, output_dir: str, input_files_order: str, dry_run: bool = False, folder_name_language: str = "german", captioning_ai_model: str = "git", use_image_difference: bool = False) -> int:
     input_path = Path(input_dir)
     output_path = Path(output_dir)
 
@@ -34,7 +34,7 @@ def main(input_dir: str, output_dir: str, input_files_order: str, dry_run: bool 
     return 0
 
 
-def analyze_files(input_path: Path, output_path: Path, input_files_order: str, folder_name_language: str = "german", captioning_ai_model: str = "blip-2", use_image_difference: bool = False) -> list[FolderInfo]:
+def analyze_files(input_path: Path, output_path: Path, input_files_order: str, folder_name_language: str = "german", captioning_ai_model: str = "git", use_image_difference: bool = False) -> list[FolderInfo]:
     logger.info(f"Analyzing files in {input_path} …")
     if input_files_order == "filename":
         files = sorted(input_path.iterdir(), key=lambda f: f.name)
