@@ -32,7 +32,7 @@ def test_photoarch_process_photo_folder(clean_output):
     assert len(input_files) == 3, "Please provide exactly 3 test files in data/input"
 
     # Act: run the main function
-    main(str(INPUT_DIR), str(OUTPUT_DIR), "filename")
+    main(str(INPUT_DIR), str(OUTPUT_DIR), "filename", captioning_ai_model="blip-2")
 
     # Assert
     # Check the year folder was created with correct name
@@ -50,8 +50,8 @@ def test_photoarch_process_photo_folder(clean_output):
     # Check the photo folders are created with correct names
     photo_folders = list(month_folder.iterdir())
     assert len(photo_folders) == 2, "More or less than exactly two photo folders were created"
-    photo_folder_1 = next((p for p in photo_folders if p.name == "2025-07-08T0753 Veranstaltungszentrum Wien Gebäude Gemälde Mannes Trompete"), None)
-    photo_folder_2 = next((p for p in photo_folders if p.name == "2025-07-08T1158 Allianz Wien Bier Flasche Tisch"), None)
+    photo_folder_1 = next((p for p in photo_folders if p.name == "2025-07-08T0753 Veranstaltungszentrum Wien blaue Gemälde Licht Mannes Trompete"), None)
+    photo_folder_2 = next((p for p in photo_folders if p.name == "2025-07-08T1158 Allianz Wien Bier Sandwich steht Tisch"), None)
     assert photo_folder_1 is not None, "Photo folder 1 was not found"
     assert photo_folder_1.is_dir(), "Photo folder 1 is not a directory"
     assert photo_folder_2 is not None, "Photo folder 2 was not found"
@@ -106,7 +106,7 @@ def test_photoarch_process_photo_folder_english(clean_output):
     assert len(input_files) == 3, "Please provide exactly 3 test files in data/input"
 
     # Act: run the main function with English folder name language
-    main(str(INPUT_DIR), str(OUTPUT_DIR), "filename", folder_name_language="english")
+    main(str(INPUT_DIR), str(OUTPUT_DIR), "filename", folder_name_language="english", captioning_ai_model="blip-2")
 
     # Assert
     # Check the year folder was created with correct name
@@ -126,8 +126,8 @@ def test_photoarch_process_photo_folder_english(clean_output):
     # Date-time prefix and place name are stable and asserted here.
     photo_folders = list(month_folder.iterdir())
     assert len(photo_folders) == 2, "More or less than exactly two photo folders were created"
-    photo_folder_1 = next((p for p in photo_folders if p.name == "2025-07-08T0753 Veranstaltungszentrum Wien building entrance man painting reading trumpet"), None)
-    photo_folder_2 = next((p for p in photo_folders if p.name == "2025-07-08T1158 Allianz Wien beer bottle table"), None)
+    photo_folder_1 = next((p for p in photo_folders if p.name == "2025-07-08T0753 Veranstaltungszentrum Wien blue door light man painting trumpet"), None)
+    photo_folder_2 = next((p for p in photo_folders if p.name == "2025-07-08T1158 Allianz Wien beer bottle next sandwich sitting table"), None)
     assert photo_folder_1 is not None, "Photo folder 1 was not found"
     assert photo_folder_1.is_dir(), "Photo folder 1 is not a directory"
     assert photo_folder_2 is not None, "Photo folder 2 was not found"
@@ -188,7 +188,7 @@ def test_photoarch_process_photo_folder_use_image_difference(clean_output):
     assert len(input_files) == 3, "Please provide exactly 3 test files in data/input"
 
     # Act: run the main function with use_image_difference=True
-    main(str(INPUT_DIR), str(OUTPUT_DIR), "filename", use_image_difference=True)
+    main(str(INPUT_DIR), str(OUTPUT_DIR), "filename", captioning_ai_model="blip-2", use_image_difference=True)
 
     # Assert: same folder structure as the default run — the two visually distinct
     # events should still be separated into two photo folders.
