@@ -8,10 +8,9 @@ Photo Archive Organizer is a complete Python module/package for automatically or
 
 ### Key Features
 
-- **AI-Powered Content Analysis**: Uses a local AI vision model to generate captions and keywords for images — without cloud access. Three models are supported and can be selected via the `--captioning-ai-model` command-line parameter:
+- **AI-Powered Content Analysis**: Uses a local AI vision model to generate captions and keywords for images — without cloud access. Two models are supported and can be selected via the `--captioning-ai-model` command-line parameter:
   - **GIT** (`git`, default): [microsoft/git-large-coco](https://huggingface.co/microsoft/git-large-coco) — General Image Tagging model, provides concise but meaningful captions with fast inference. Lightweight memory footprint and good balance between quality and performance.
   - **BLIP-2** (`blip-2`): [Salesforce/blip2-flan-t5-xl](https://huggingface.co/Salesforce/blip2-flan-t5-xl) — a fast, lightweight vision-language model. Good quality captions with low memory requirements.
-  - **LLaVA** (`llava`): [llava-hf/llava-1.5-7b-hf](https://huggingface.co/llava-hf/llava-1.5-7b-hf) — a large multimodal language model that produces richer, more descriptive captions at the cost of higher memory usage and longer inference time.
   
   Both models run fully offline. The selected model is automatically downloaded on first use and cached locally in the `models/` directory.
 - **Semantic Caption Comparison**: Uses a Sentence-Transformer model (paraphrase-multilingual-MiniLM-L12-v2) to detect semantically similar image captions for intelligent photo grouping. This allows recognition of related concepts even when exact words differ.
@@ -142,7 +141,7 @@ exit_code = run(
 - `--input-files-order` - Order to process input files: `filename` or `modified-date` (default: `filename`)
 - `--dry-run` - Analyze photos and print the result folder tree without copying any files
 - `--folder-name-language` - Language used for keywords in folder names: `german` or `english` (default: `german`). This only affects folder names — metadata JSON files always contain both the original English and translated German keywords and captions regardless of this setting.
-- `--captioning-ai-model` - AI model used for image captioning: `blip-2` or `llava` (default: `blip-2`). See [AI Models](#ai-models) for details.
+- `--captioning-ai-model` - AI model used for image captioning: `blip-2` or `git` (default: `git`). See [AI Models](#ai-models) for details.
 - `--use-image-difference` - Use visual image similarity (CLIP embeddings computed from pixel data) instead of semantic caption similarity for the content difference score. See [Image Embedding Comparison](#image-embedding-comparison) for details.
 
 ### Output Structure
@@ -205,7 +204,7 @@ Each photo has an accompanying JSON metadata file containing:
    - Timestamp (from EXIF or file modification date)
    - GPS coordinates (from EXIF data)
    - Location name (reverse geocoding via OpenStreetMap)
-   - Image captions (AI-generated via offline model — BLIP-2 by default, LLaVA optionally)
+   - Image captions (AI-generated via offline model — GIT by default or BLIP-2 optionally)
 
 2. **Folder Grouping**: Photos are grouped into folders based on:
    - Same month/year
@@ -244,7 +243,7 @@ The module caches analysis results in `.photoarch/` to speed up repeated runs. D
 - **GPU Acceleration**: The module automatically detects and uses available GPUs (Apple Silicon MPS, NVIDIA CUDA) for AI model inference. No configuration required. See [GPU Acceleration](#4-gpu-acceleration-optional-but-recommended) for details and performance benchmarks.
 - Reverse geocoding uses OpenStreetMap Nominatim API (rate-limited)
 - Keyword translation uses Google Translate API (may be rate-limited)
-- AI image captioning happens offline with a locally downloaded model (BLIP-2 or LLaVA)
+- AI image captioning happens offline with a locally downloaded model (GIT or BLIP-2)
 - Semantic caption comparison uses the offline Sentence-Transformer model (paraphrase-multilingual-MiniLM-L12-v2)
 - With `--use-image-difference`, image similarity is computed via the offline CLIP model (clip-ViT-B-32). Both scores are always logged at DEBUG level so the two approaches can be compared.
 - Original files are **copied**, not moved (originals remain in input directory)
@@ -290,14 +289,14 @@ Image captioning is the core AI step that generates a text description for each 
 
 | Parameter value | Model | Description |
 |---|---|---|
-| `blip-2` *(default)* | [Salesforce/blip2-flan-t5-xl](https://huggingface.co/Salesforce/blip2-flan-t5-xl) | Lightweight vision-language model. Fast inference, low memory usage (~4 GB). Caption quality is good for most photos. |
-| `llava` | [llava-hf/llava-1.5-7b-hf](https://huggingface.co/llava-hf/llava-1.5-7b-hf) | Large multimodal language model (7B parameters). Produces richer, more detailed captions. Requires more memory (~14 GB) and is slower. |
+| `git` *(default)* | [microsoft/git-large-coco](https://huggingface.co/microsoft/git-large-coco) | General Image Tagging model. Fast inference, low memory usage (~2 GB). Good caption quality for most photos. |
+| `blip-2` | [Salesforce/blip2-flan-t5-xl](https://huggingface.co/Salesforce/blip2-flan-t5-xl) | Lightweight vision-language model. Fast inference, low memory usage (~4 GB). Caption quality is good for most photos. |
 
 Both models run **fully offline** after an initial download. Models are cached in the `models/` directory.
 
 Select the model via the `--captioning-ai-model` command-line parameter:
 ```bash
-python -m photoarch.main --captioning-ai-model llava
+python -m photoarch.main --captioning-ai-model blip-2
 ```
 
 ### Semantic Caption Comparison

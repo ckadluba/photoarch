@@ -11,7 +11,6 @@ VIDEO_FILE_EXTENSIONS: Final = {".mp4"}
 
 # AI Model names and parameters
 IMAGE_CAPTIONING_MODEL_NAME_BLIP2: Final = "Salesforce/blip2-flan-t5-xl"
-IMAGE_CAPTIONING_MODEL_NAME_LLAVA: Final = "llava-hf/llava-1.5-7b-hf"
 IMAGE_CAPTIONING_MODEL_NAME_GIT: Final = "microsoft/git-large-coco"
 SEMANTIC_SIMILARITY_MODEL_NAME: Final = "paraphrase-multilingual-MiniLM-L12-v2"
 IMAGE_EMBEDDING_MODEL_NAME: Final = "clip-ViT-B-32"
