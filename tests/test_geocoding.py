@@ -23,7 +23,7 @@ class TestGeocoding(unittest.TestCase):
                 json.dumps(
                     {
                         "address": {"road": "Straße des Ersten Mai", "city": "Wien"},
-                        "name": "Straße des Ersten Mai Wien"
+                        "name": "Straße des Ersten Mai"
                     },
                     indent=2,
                     ensure_ascii=False
@@ -43,7 +43,7 @@ class TestGeocoding(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             response_json = {
                 "address": {"road": "Foo", "city": "Bar"},
-                "name": "Foo Bar"
+                "name": "Foo"
             }
             mock_response = Mock()
             mock_response.raise_for_status.return_value = None
