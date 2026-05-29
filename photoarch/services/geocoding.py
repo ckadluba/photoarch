@@ -99,39 +99,23 @@ def _find_cached_api_response(lat, lon):
 
 
 def _get_api_cache_filename(lat, lon):
-    lat_str = repr(lat).replace('.', '')
-    lon_str = repr(lon).replace('.', '')
+    lat_str = repr(lat).replace('.', 'o')
+    lon_str = repr(lon).replace('.', 'o')
     return f"osm_lat_{lat_str}_lon_{lon_str}.json"
 
 
 def _coords_from_cache_filename(name, target_lat, target_lon):
-    match = re.match(r"^osm_lat_(-?\d+)_lon_(-?\d+)\.json$", name)
+    match = re.match(r"^osm_lat_([+-]?\d+o\d+)_lon_([+-]?\d+o\d+)\.json$", name)
     if not match:
         return None
     try:
-        lat_candidates = _decode_compact_coordinate_candidates(match.group(1))
-        lon_candidates = _decode_compact_coordinate_candidates(match.group(2))
-        if not lat_candidates or not lon_candidates:
-            return None
-        lat = min(lat_candidates, key=lambda x: abs(x - target_lat))
-        lon = min(lon_candidates, key=lambda x: abs(x - target_lon))
+        lat_str = match.group(1)
+        lon_str = match.group(2)
+        lat = float(lat_str.replace('o', '.'))
+        lon = float(lon_str.replace('o', '.'))
         return lat, lon
     except ValueError:
         return None
-
-
-def _decode_compact_coordinate_candidates(value):
-    sign = -1 if value.startswith('-') else 1
-    digits = value.lstrip('-')
-    if not digits:
-        return []
-
-    candidates = []
-    for pos in range(1, len(digits)):
-        candidate = sign * float(digits[:pos] + '.' + digits[pos:])
-        if repr(candidate).replace('.', '') == value:
-            candidates.append(candidate)
-    return candidates
 
 
 def _distance_meters(lat1, lon1, lat2, lon2):
