@@ -22,6 +22,7 @@ def get_address_from_coords(lat, lon) -> Address | None:
 
     cache_file = _find_cached_api_response(lat, lon)
     if cache_file is not None:
+        logger.debug(f"Using cached OSM API file {cache_file} for coordinates ({lat}, {lon})")
         try:
             data = json.loads(cache_file.read_text(encoding="utf-8"))
             return read_address_from_api_response(data)
