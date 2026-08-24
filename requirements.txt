@@ -2,12 +2,12 @@ accelerate
 colorlog==6.10.1
 dataclasses_json==0.6.7
 deep_translator==1.11.4
-geopy==2.4.1
+geopy==2.5.0
 numpy
 open_clip_torch
-Pillow==12.1.1
+Pillow==12.3.0
 requests==2.34.2
 sentence-transformers==5.6.0
 torch==2.13.0
 torchvision==0.26.0
-transformers==5.9.0
+transformers==5.13.1

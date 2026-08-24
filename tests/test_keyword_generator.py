@@ -102,6 +102,10 @@ class TestKeywordGenerator(unittest.TestCase):
         # split() without arguments handles multiple spaces
         self.assertEqual(result, ["dog", "cat", "bird"])
 
+    def test_empty_caption(self) -> None:
+        """Test that an empty caption returns an empty list"""
+        result = get_keywords_from_caption(None, STOPWORDS)
+        self.assertEqual(result, [])
 
 if __name__ == '__main__':
     unittest.main()

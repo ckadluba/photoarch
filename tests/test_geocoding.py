@@ -5,9 +5,32 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from photoarch.services import geocoding
+from tests.support import seed_osm_cache
 
 
 class TestGeocoding(unittest.TestCase):
+    def test_photo_locations_use_deterministic_cache_fixtures(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            cache_dir = Path(temp_dir) / "cache"
+            seed_osm_cache(cache_dir)
+
+            with patch("photoarch.services.geocoding.requests.get") as mock_get:
+                venue = geocoding.get_address_from_coords(
+                    48.17222777777778,
+                    16.27291111111111,
+                    cache_dir / "osm_api_cache",
+                )
+                allianz = geocoding.get_address_from_coords(
+                    48.170674999999996,
+                    16.333144444444443,
+                    cache_dir / "osm_api_cache",
+                )
+
+            self.assertEqual(venue.name, "Veranstaltungszentrum Wien")
+            self.assertEqual(allianz.name, "Allianz Wien")
+            self.assertEqual(allianz.postcode, "1120")
+            mock_get.assert_not_called()
+
     def test_get_address_from_coords_none(self):
         address = geocoding.get_address_from_coords(None, None)
         self.assertIsNone(address)
@@ -31,9 +54,8 @@ class TestGeocoding(unittest.TestCase):
                 encoding="utf-8"
             )
 
-            with patch.object(geocoding, "OSM_API_CACHE_DIR", temp_dir):
-                with patch("photoarch.services.geocoding.requests.get") as mock_get:
-                    address = geocoding.get_address_from_coords(48.2152, 16.3994)
+            with patch("photoarch.services.geocoding.requests.get") as mock_get:
+                address = geocoding.get_address_from_coords(48.2152, 16.3994, temp_dir)
 
             self.assertIsNotNone(address)
             self.assertEqual(address.name, "Straße des Ersten Mai Wien")
@@ -49,9 +71,8 @@ class TestGeocoding(unittest.TestCase):
             mock_response.raise_for_status.return_value = None
             mock_response.json.return_value = response_json
 
-            with patch.object(geocoding, "OSM_API_CACHE_DIR", temp_dir):
-                with patch("photoarch.services.geocoding.requests.get", return_value=mock_response):
-                    address = geocoding.get_address_from_coords(48.0, 11.0)
+            with patch("photoarch.services.geocoding.requests.get", return_value=mock_response):
+                address = geocoding.get_address_from_coords(48.0, 11.0, temp_dir)
 
             self.assertIsNotNone(address)
             self.assertEqual(address.name, "Foo Bar")
@@ -76,9 +97,8 @@ class TestGeocoding(unittest.TestCase):
             cache_file = Path(temp_dir) / geocoding._get_api_cache_filename(48.2152, 16.3994)
             cache_file.write_text(json.dumps({"address": {}}, indent=2, ensure_ascii=False), encoding="utf-8")
 
-            with patch.object(geocoding, "OSM_API_CACHE_DIR", temp_dir):
-                with patch.object(geocoding, "GEO_API_CACHE_TOLERANCE_METERS", 5):
-                    result = geocoding._find_cached_api_response(48.2152001, 16.3994001)
+            with patch.object(geocoding, "GEO_API_CACHE_TOLERANCE_METERS", 5):
+                result = geocoding._find_cached_api_response(48.2152001, 16.3994001, temp_dir)
 
             self.assertEqual(result, cache_file)
 
@@ -87,9 +107,8 @@ class TestGeocoding(unittest.TestCase):
             cache_file = Path(temp_dir) / geocoding._get_api_cache_filename(48.2152, 16.3994)
             cache_file.write_text(json.dumps({"address": {}}, indent=2, ensure_ascii=False), encoding="utf-8")
 
-            with patch.object(geocoding, "OSM_API_CACHE_DIR", temp_dir):
-                with patch.object(geocoding, "GEO_API_CACHE_TOLERANCE_METERS", 5):
-                    result = geocoding._find_cached_api_response(48.3252, 16.3994)
+            with patch.object(geocoding, "GEO_API_CACHE_TOLERANCE_METERS", 5):
+                result = geocoding._find_cached_api_response(48.3252, 16.3994, temp_dir)
 
             self.assertIsNone(result)
 

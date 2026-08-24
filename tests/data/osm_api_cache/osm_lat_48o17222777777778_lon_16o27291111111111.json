@@ -1,0 +1,10 @@
+{
+  "name": "Veranstaltungszentrum",
+  "address": {
+    "road": "Linzer Straße",
+    "city": "Wien",
+    "postcode": "1140",
+    "country": "Österreich",
+    "country_code": "at"
+  }
+}

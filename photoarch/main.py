@@ -7,6 +7,7 @@ from collections.abc import Sequence
 
 from .models import FolderInfo, FileInfo
 from .ai_models_context import AiModelsContext
+from .cache import write_json_atomic
 from .logging_config import setup_logging
 from .analysis.file_analyzer import CACHE_DIR, INPUT_DIR, OUTPUT_DIR, analyze_file
 from .fileops.folder_builder import create_folder_info, is_new_folder, finish_last_folder_info
@@ -19,7 +20,16 @@ logger = logging.getLogger(__name__)
 
 # Code
 
-def main(input_dir: str, output_dir: str, input_files_order: str, dry_run: bool = False, folder_name_language: str = "german", captioning_ai_model: str = "git", use_image_difference: bool = False) -> int:
+def main(
+    input_dir: str,
+    output_dir: str,
+    input_files_order: str,
+    dry_run: bool = False,
+    folder_name_language: str = "german",
+    captioning_ai_model: str = "git",
+    use_image_difference: bool = False,
+    cache_dir: str | Path = CACHE_DIR,
+) -> int:
     input_path = Path(input_dir)
     output_path = Path(output_dir)
 
@@ -27,14 +37,30 @@ def main(input_dir: str, output_dir: str, input_files_order: str, dry_run: bool 
         logger.error(f"Input directory {input_path} does not exist or is not a directory.")
         return 2
 
-    folder_infos = analyze_files(input_path, output_path, input_files_order, folder_name_language, captioning_ai_model, use_image_difference)
+    folder_infos = analyze_files(
+        input_path,
+        output_path,
+        input_files_order,
+        folder_name_language,
+        captioning_ai_model,
+        use_image_difference,
+        Path(cache_dir),
+    )
     copy_files(folder_infos, input_path, output_path, dry_run)
 
     logger.info("Finished.")
     return 0
 
 
-def analyze_files(input_path: Path, output_path: Path, input_files_order: str, folder_name_language: str = "german", captioning_ai_model: str = "git", use_image_difference: bool = False) -> list[FolderInfo]:
+def analyze_files(
+    input_path: Path,
+    output_path: Path,
+    input_files_order: str,
+    folder_name_language: str = "german",
+    captioning_ai_model: str = "git",
+    use_image_difference: bool = False,
+    cache_dir: Path = CACHE_DIR,
+) -> list[FolderInfo]:
     logger.info(f"Analyzing files in {input_path} …")
     if input_files_order == "filename":
         files = sorted(input_path.iterdir(), key=lambda f: f.name)
@@ -54,7 +80,12 @@ def analyze_files(input_path: Path, output_path: Path, input_files_order: str, f
         eta_seconds = remaining_files * last_analysis_duration_seconds
         logger.info(f"Analyzing file {file_info.name} ({len(file_infos) + 1}/{len(files)}), ETA: {timedelta(seconds=eta_seconds)} …")
 
-        file_info = analyze_file(file_info, ai_models_context, captioning_ai_model)
+        file_info = analyze_file(
+            file_info,
+            ai_models_context,
+            captioning_ai_model,
+            cache_dir=cache_dir,
+        )
         if file_info.skip:
             continue  # Skip files that do not match the criteria
 
@@ -96,15 +127,20 @@ def copy_files(folder_infos: list[FolderInfo], input_path: Path, output_path: Pa
                 photo_file_dst_path = folder_info.path / file_info.path
                 shutil.copy(photo_file_src_path, photo_file_dst_path)
                 file_meta_name = file_info.path.stem + ".json"
-                meta_file_src_path = CACHE_DIR / file_meta_name
                 meta_file_dst_path = folder_meta_path / file_meta_name
-                shutil.copy(meta_file_src_path, meta_file_dst_path)
+                write_json_atomic(meta_file_dst_path, file_info.to_dict())
 
 def cli(argv: Sequence[str] | None = None) -> int:
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Sort and organize photos by date, location, and AI-generated content.")
     parser.add_argument("--input", type=str, default=str(INPUT_DIR), help=f"Input directory containing photos (default: {INPUT_DIR})")
     parser.add_argument("--output", type=str, default=str(OUTPUT_DIR), help=f"Output directory for sorted photos (default: {OUTPUT_DIR})")
+    parser.add_argument(
+        "--cache-dir",
+        type=str,
+        default=str(CACHE_DIR),
+        help=f"Directory for analysis and geocoding caches (default: {CACHE_DIR})",
+    )
     parser.add_argument(
         "--log-level",
         default="INFO",
@@ -144,7 +180,16 @@ def cli(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     setup_logging(args.log_level)
-    return main(args.input, args.output, input_files_order=args.input_files_order, dry_run=args.dry_run, folder_name_language=args.folder_name_language, captioning_ai_model=args.captioning_ai_model, use_image_difference=args.use_image_difference)
+    return main(
+        args.input,
+        args.output,
+        input_files_order=args.input_files_order,
+        dry_run=args.dry_run,
+        folder_name_language=args.folder_name_language,
+        captioning_ai_model=args.captioning_ai_model,
+        use_image_difference=args.use_image_difference,
+        cache_dir=args.cache_dir,
+    )
 
 if __name__ == "__main__":
     raise SystemExit(cli())

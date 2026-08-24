@@ -1,5 +1,4 @@
 import logging
-import json
 from pathlib import Path
 
 from ..config import (
@@ -9,6 +8,7 @@ from ..config import (
 )
 from ..models import FileInfo
 from ..ai_models_context import AiModelsContext
+from ..cache import get_analysis_cache_file, write_json_atomic
 from ..fileops.file_utils import get_file_modified_datetime, does_filename_meet_criteria
 from ..services.geocoding import get_address_from_coords
 from ..services.translate import translate_english_to_german
@@ -29,11 +29,22 @@ logger = logging.getLogger(__name__)
 
 # Code
 
-def analyze_file(file_path: Path, ai_models_context: AiModelsContext | None = None, captioning_ai_model: str = "blip-2") -> FileInfo:
+def analyze_file(
+    file_path: Path,
+    ai_models_context: AiModelsContext | None = None,
+    captioning_ai_model: str = "blip-2",
+    cache_dir: str | Path | None = None,
+) -> FileInfo:
     """Analyze image and return FileInfo"""
 
+    resolved_cache_dir = Path(cache_dir) if cache_dir is not None else CACHE_DIR
+
     # Use cache entry if available
-    cache_file = CACHE_DIR / (file_path.stem + ".json")
+    cache_file = get_analysis_cache_file(
+        resolved_cache_dir,
+        file_path,
+        captioning_ai_model,
+    )
     if cache_file.exists():
         logger.info(f"Using cached {cache_file.name}.")
         with open(cache_file, "r", encoding="utf-8") as f:
@@ -86,7 +97,11 @@ def analyze_file(file_path: Path, ai_models_context: AiModelsContext | None = No
     file_info.lon = lon
     
     # Get address from coordinates
-    address = get_address_from_coords(file_info.lat, file_info.lon)
+    address = get_address_from_coords(
+        file_info.lat,
+        file_info.lon,
+        cache_dir=resolved_cache_dir / "osm_api_cache",
+    )
     if address is None:
         logger.warning(f"Could not read address from {file_path.name}.")
     file_info.address = address
@@ -99,6 +114,9 @@ def analyze_file(file_path: Path, ai_models_context: AiModelsContext | None = No
             logger.info(f"Initializing captioner ({captioning_ai_model}) …")
             ai_models_context.captioner = create_caption_generator(captioning_ai_model, device="auto")
         caption = ai_models_context.captioner.get_caption_for_image_file(file_path)
+        if caption is None:
+            logger.warning(f"Could not generate caption for {file_path.name}.")
+            caption = ""
         keywords = get_keywords_from_caption(caption, STOPWORDS)
         caption_german = translate_english_to_german(caption)
         keywords_german = get_keywords_from_caption(caption_german, STOPWORDS_GERMAN)
@@ -113,14 +131,6 @@ def analyze_file(file_path: Path, ai_models_context: AiModelsContext | None = No
         file_info.keywords_german.append(KEYWORD_GENERIC_VIDEO)
 
     # Save to cache
-    CACHE_DIR.mkdir(exist_ok=True)
-    cache_file.write_text(
-        json.dumps(
-            file_info.to_dict(),
-            indent=2,
-            ensure_ascii=False
-        ),
-        encoding="utf-8"
-    )
+    write_json_atomic(cache_file, file_info.to_dict())
 
     return file_info
