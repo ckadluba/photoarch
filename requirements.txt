@@ -2,7 +2,7 @@ accelerate
 colorlog==6.10.1
 dataclasses_json==0.6.7
 deep_translator==1.11.4
-geopy==2.4.1
+geopy==2.5.0
 numpy
 open_clip_torch
 Pillow==12.3.0
