@@ -2,11 +2,13 @@ import unittest
 import tempfile
 import pytest
 from pathlib import Path
+from unittest.mock import patch
 
 from photoarch.analysis import file_analyzer
 from photoarch.cache import get_analysis_cache_file
 from photoarch.analysis.ai_captioning_blip2 import Blip2CaptionGenerator
 from photoarch.ai_models_context import AiModelsContext
+from tests.support import reject_live_geocoding, seed_osm_cache
 
 
 class TestFileAnalyzer(unittest.TestCase):
@@ -32,13 +34,18 @@ class TestFileAnalyzer(unittest.TestCase):
             # Arrange
             test_image = Path("tests/data/input/PXL_20250708_095842343.jpg")
             context = AiModelsContext(captioner=Blip2CaptionGenerator(device="cpu"))
+            cache_dir = Path(temp_dir) / "cache"
+            seed_osm_cache(cache_dir)
 
             # Act
-            info = file_analyzer.analyze_file(
-                test_image,
-                context,
-                cache_dir=Path(temp_dir) / "cache",
-            )
+            with (
+                reject_live_geocoding(),
+                patch(
+                    "photoarch.analysis.file_analyzer.translate_english_to_german",
+                    return_value="Auf einem Tisch steht eine Flasche Bier neben einem Sandwich",
+                ),
+            ):
+                info = file_analyzer.analyze_file(test_image, context, cache_dir=cache_dir)
 
             # Assert
             self.assertEqual(info.path.name, test_image.name)

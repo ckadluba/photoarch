@@ -1,0 +1,11 @@
+{
+  "name": "Allianz",
+  "address": {
+    "road": "Am Europlatz",
+    "house_number": "2",
+    "city": "Wien",
+    "postcode": "1120",
+    "country": "Österreich",
+    "country_code": "at"
+  }
+}

@@ -5,9 +5,32 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from photoarch.services import geocoding
+from tests.support import seed_osm_cache
 
 
 class TestGeocoding(unittest.TestCase):
+    def test_photo_locations_use_deterministic_cache_fixtures(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            cache_dir = Path(temp_dir) / "cache"
+            seed_osm_cache(cache_dir)
+
+            with patch("photoarch.services.geocoding.requests.get") as mock_get:
+                venue = geocoding.get_address_from_coords(
+                    48.17222777777778,
+                    16.27291111111111,
+                    cache_dir / "osm_api_cache",
+                )
+                allianz = geocoding.get_address_from_coords(
+                    48.170674999999996,
+                    16.333144444444443,
+                    cache_dir / "osm_api_cache",
+                )
+
+            self.assertEqual(venue.name, "Veranstaltungszentrum Wien")
+            self.assertEqual(allianz.name, "Allianz Wien")
+            self.assertEqual(allianz.postcode, "1120")
+            mock_get.assert_not_called()
+
     def test_get_address_from_coords_none(self):
         address = geocoding.get_address_from_coords(None, None)
         self.assertIsNone(address)
