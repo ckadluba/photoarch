@@ -138,6 +138,7 @@ exit_code = run(
 ### Command-Line Arguments
 - `--input` - Input directory containing photos (default: `input_photos`)
 - `--output` - Output directory for sorted photos (default: `sorted_photos`)
+- `--cache-dir` - Directory for analysis and reverse-geocoding caches (default: `.photoarch`). Use a separate path for isolated runs.
 - `--input-files-order` - Order to process input files: `filename` or `modified-date` (default: `filename`)
 - `--dry-run` - Analyze photos and print the result folder tree without copying any files
 - `--folder-name-language` - Language used for keywords in folder names: `german` or `english` (default: `german`). This only affects folder names — metadata JSON files always contain both the original English and translated German keywords and captions regardless of this setting.
@@ -232,10 +233,11 @@ You can modify constants in [photoarch/config.py](photoarch/config.py) to custom
 
 ### Caching
 
-The module caches analysis results in `.photoarch/` to speed up repeated runs. Delete this folder to force re-analysis of all photos.
+The module caches analysis results in `.photoarch/analysis/` to speed up repeated runs. Cache entries are scoped to the source file state and selected captioning model. Delete `.photoarch/` to force re-analysis of all photos, or select another cache root with `--cache-dir`.
 
 - Reverse geocoding results are also cached in `.photoarch/osm_api_cache/`.
 - Cached OSM responses are reused for coordinates within `GEO_API_CACHE_TOLERANCE_METERS` (default: 50m).
+- Cache files are written atomically. The output tree contains only copied media and their final `metadata/*.json` files; cache files are never copied as working artifacts.
 
 ### Notes
 

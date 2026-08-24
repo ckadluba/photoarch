@@ -1,4 +1,3 @@
-import shutil
 from pathlib import Path
 import pytest
 from photoarch.main import main
@@ -6,37 +5,22 @@ from photoarch.main import main
 # Paths for the test
 BASE_DIR = Path(__file__).parent
 INPUT_DIR = BASE_DIR / "data/input"
-OUTPUT_DIR = BASE_DIR / "data/output"
-CACHE_DIR = Path(__file__).parent.parent / ".photoarch"  # Assuming cache is in the project root
 
-
-# Fixture to clean output folder before and after each test
-@pytest.fixture
-def clean_output():
-    """Delete the output folder before and after the test"""
-    if OUTPUT_DIR.exists():
-        shutil.rmtree(OUTPUT_DIR)
-    if CACHE_DIR.exists():
-        (CACHE_DIR / "PXL_20250708_055317372.json").unlink(missing_ok=True)
-        (CACHE_DIR / "PXL_20250708_055353541.json").unlink(missing_ok=True)
-        (CACHE_DIR / "PXL_20250708_095842343.json").unlink(missing_ok=True)
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    yield
-    shutil.rmtree(OUTPUT_DIR)  # cleanup after test
 
 # Integration test
 @pytest.mark.longrunning
-def test_photoarch_process_photo_folder(clean_output):
+def test_photoarch_process_photo_folder(run_paths):
+    output_dir, cache_dir = run_paths
     # Arrange: ensure 3 test files exist
     input_files = list(INPUT_DIR.glob("*"))
     assert len(input_files) == 3, "Please provide exactly 3 test files in data/input"
 
     # Act: run the main function
-    main(str(INPUT_DIR), str(OUTPUT_DIR), "filename")
+    main(str(INPUT_DIR), str(output_dir), "filename", cache_dir=cache_dir)
 
     # Assert
     # Check the year folder was created with correct name
-    year_folders = list(OUTPUT_DIR.iterdir())
+    year_folders = list(output_dir.iterdir())
     assert len(year_folders) == 1, "More or less than exactly one year folder was created"
     year_folder = year_folders[0]
     assert year_folder.name == "2025", "Year folder should be named '2025' based on test file dates"
@@ -100,17 +84,24 @@ def test_photoarch_process_photo_folder(clean_output):
 
 # Integration test with English folder names
 @pytest.mark.longrunning
-def test_photoarch_process_photo_folder_english(clean_output):
+def test_photoarch_process_photo_folder_english(run_paths):
+    output_dir, cache_dir = run_paths
     # Arrange: ensure 3 test files exist
     input_files = list(INPUT_DIR.glob("*"))
     assert len(input_files) == 3, "Please provide exactly 3 test files in data/input"
 
     # Act: run the main function with English folder name language
-    main(str(INPUT_DIR), str(OUTPUT_DIR), "filename", folder_name_language="english")
+    main(
+        str(INPUT_DIR),
+        str(output_dir),
+        "filename",
+        folder_name_language="english",
+        cache_dir=cache_dir,
+    )
 
     # Assert
     # Check the year folder was created with correct name
-    year_folders = list(OUTPUT_DIR.iterdir())
+    year_folders = list(output_dir.iterdir())
     assert len(year_folders) == 1, "More or less than exactly one year folder was created"
     year_folder = year_folders[0]
     assert year_folder.name == "2025", "Year folder should be named '2025' based on test file dates"
@@ -182,17 +173,24 @@ def test_photoarch_process_photo_folder_english(clean_output):
 
 # Integration test with --use-image-difference
 @pytest.mark.longrunning
-def test_photoarch_process_photo_folder_use_image_difference(clean_output):
+def test_photoarch_process_photo_folder_use_image_difference(run_paths):
+    output_dir, cache_dir = run_paths
     # Arrange: ensure 3 test files exist
     input_files = list(INPUT_DIR.glob("*"))
     assert len(input_files) == 3, "Please provide exactly 3 test files in data/input"
 
     # Act: run the main function with use_image_difference=True
-    main(str(INPUT_DIR), str(OUTPUT_DIR), "filename", use_image_difference=True)
+    main(
+        str(INPUT_DIR),
+        str(output_dir),
+        "filename",
+        use_image_difference=True,
+        cache_dir=cache_dir,
+    )
 
     # Assert: same folder structure as the default run — the two visually distinct
     # events should still be separated into two photo folders.
-    year_folders = list(OUTPUT_DIR.iterdir())
+    year_folders = list(output_dir.iterdir())
     assert len(year_folders) == 1, "More or less than exactly one year folder was created"
     year_folder = year_folders[0]
     assert year_folder.name == "2025", "Year folder should be named '2025' based on test file dates"

@@ -6,6 +6,7 @@ from pathlib import Path
 
 import requests
 
+from ..cache import write_json_atomic
 from ..config import NOMINATIM_URL, OSM_API_CACHE_DIR, GEO_API_CACHE_TOLERANCE_METERS
 from ..models import Address
 
@@ -15,12 +16,12 @@ from ..models import Address
 logger = logging.getLogger(__name__)
 
 
-def get_address_from_coords(lat, lon) -> Address | None:
+def get_address_from_coords(lat, lon, cache_dir: str | Path | None = None) -> Address | None:
     """Reverse geocoding using OSM Nominatim"""
     if lat is None or lon is None:
         return None
 
-    cache_file = _find_cached_api_response(lat, lon)
+    cache_file = _find_cached_api_response(lat, lon, cache_dir=cache_dir)
     if cache_file is not None:
         logger.debug(f"Using cached OSM API file {cache_file} for coordinates ({lat}, {lon})")
         try:
@@ -48,7 +49,7 @@ def get_address_from_coords(lat, lon) -> Address | None:
         r.raise_for_status()
         data = r.json()
 
-        _save_api_response_to_cache(lat, lon, data)
+        _save_api_response_to_cache(lat, lon, data, cache_dir=cache_dir)
 
         return read_address_from_api_response(data)
 
@@ -77,20 +78,19 @@ def read_address_from_api_response(data):
         return None
 
 
-def _save_api_response_to_cache(lat, lon, data):
-    cache_dir = Path(OSM_API_CACHE_DIR)
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    cache_file = cache_dir / _get_api_cache_filename(lat, lon)
-    cache_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+def _save_api_response_to_cache(lat, lon, data, cache_dir: str | Path | None = None):
+    resolved_cache_dir = Path(cache_dir) if cache_dir is not None else Path(OSM_API_CACHE_DIR)
+    cache_file = resolved_cache_dir / _get_api_cache_filename(lat, lon)
+    write_json_atomic(cache_file, data)
     return cache_file
 
 
-def _find_cached_api_response(lat, lon):
-    cache_dir = Path(OSM_API_CACHE_DIR)
-    if not cache_dir.exists():
+def _find_cached_api_response(lat, lon, cache_dir: str | Path | None = None):
+    resolved_cache_dir = Path(cache_dir) if cache_dir is not None else Path(OSM_API_CACHE_DIR)
+    if not resolved_cache_dir.exists():
         return None
 
-    for cache_file in cache_dir.glob("osm_lat_*_lon_*.json"):
+    for cache_file in resolved_cache_dir.glob("osm_lat_*_lon_*.json"):
         coords = _coords_from_cache_filename(cache_file.name, lat, lon)
         if coords is None:
             continue

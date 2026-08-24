@@ -31,9 +31,8 @@ class TestGeocoding(unittest.TestCase):
                 encoding="utf-8"
             )
 
-            with patch.object(geocoding, "OSM_API_CACHE_DIR", temp_dir):
-                with patch("photoarch.services.geocoding.requests.get") as mock_get:
-                    address = geocoding.get_address_from_coords(48.2152, 16.3994)
+            with patch("photoarch.services.geocoding.requests.get") as mock_get:
+                address = geocoding.get_address_from_coords(48.2152, 16.3994, temp_dir)
 
             self.assertIsNotNone(address)
             self.assertEqual(address.name, "Straße des Ersten Mai Wien")
@@ -49,9 +48,8 @@ class TestGeocoding(unittest.TestCase):
             mock_response.raise_for_status.return_value = None
             mock_response.json.return_value = response_json
 
-            with patch.object(geocoding, "OSM_API_CACHE_DIR", temp_dir):
-                with patch("photoarch.services.geocoding.requests.get", return_value=mock_response):
-                    address = geocoding.get_address_from_coords(48.0, 11.0)
+            with patch("photoarch.services.geocoding.requests.get", return_value=mock_response):
+                address = geocoding.get_address_from_coords(48.0, 11.0, temp_dir)
 
             self.assertIsNotNone(address)
             self.assertEqual(address.name, "Foo Bar")
@@ -76,9 +74,8 @@ class TestGeocoding(unittest.TestCase):
             cache_file = Path(temp_dir) / geocoding._get_api_cache_filename(48.2152, 16.3994)
             cache_file.write_text(json.dumps({"address": {}}, indent=2, ensure_ascii=False), encoding="utf-8")
 
-            with patch.object(geocoding, "OSM_API_CACHE_DIR", temp_dir):
-                with patch.object(geocoding, "GEO_API_CACHE_TOLERANCE_METERS", 5):
-                    result = geocoding._find_cached_api_response(48.2152001, 16.3994001)
+            with patch.object(geocoding, "GEO_API_CACHE_TOLERANCE_METERS", 5):
+                result = geocoding._find_cached_api_response(48.2152001, 16.3994001, temp_dir)
 
             self.assertEqual(result, cache_file)
 
@@ -87,9 +84,8 @@ class TestGeocoding(unittest.TestCase):
             cache_file = Path(temp_dir) / geocoding._get_api_cache_filename(48.2152, 16.3994)
             cache_file.write_text(json.dumps({"address": {}}, indent=2, ensure_ascii=False), encoding="utf-8")
 
-            with patch.object(geocoding, "OSM_API_CACHE_DIR", temp_dir):
-                with patch.object(geocoding, "GEO_API_CACHE_TOLERANCE_METERS", 5):
-                    result = geocoding._find_cached_api_response(48.3252, 16.3994)
+            with patch.object(geocoding, "GEO_API_CACHE_TOLERANCE_METERS", 5):
+                result = geocoding._find_cached_api_response(48.3252, 16.3994, temp_dir)
 
             self.assertIsNone(result)
 
