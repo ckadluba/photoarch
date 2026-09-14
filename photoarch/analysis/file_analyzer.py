@@ -11,7 +11,7 @@ from ..ai_models_context import AiModelsContext
 from ..cache import get_analysis_cache_file, write_json_atomic
 from ..fileops.file_utils import get_file_modified_datetime, does_filename_meet_criteria
 from ..services.geocoding import get_address_from_coords
-from ..services.translate import translate_english_to_german
+from ..services.translate import TranslationError, translate_english_to_german
 from ..language.keyword_generator import get_keywords_from_caption
 from .exif_reader import get_exif_data_from_file, get_date_from_exif_data, get_camera_from_exif_data, get_gps_from_exif_data
 from .caption_generator_factory import create_caption_generator
@@ -119,6 +119,11 @@ def analyze_file(
             caption = ""
         keywords = get_keywords_from_caption(caption, STOPWORDS)
         caption_german = translate_english_to_german(caption)
+        if not caption_german:
+            logger.error(
+                f"Translation failed for {file_path.name}; aborting processing."
+            )
+            raise TranslationError("Could not translate caption to German.")
         keywords_german = get_keywords_from_caption(caption_german, STOPWORDS_GERMAN)
         file_info.caption = caption
         file_info.caption_german = caption_german

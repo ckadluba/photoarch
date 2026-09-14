@@ -2,16 +2,42 @@ import unittest
 import tempfile
 import pytest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from photoarch.analysis import file_analyzer
 from photoarch.cache import get_analysis_cache_file
 from photoarch.analysis.ai_captioning_blip2 import Blip2CaptionGenerator
 from photoarch.ai_models_context import AiModelsContext
+from photoarch.services.translate import TranslationError
 from tests.support import reject_live_geocoding, seed_osm_cache
 
 
 class TestFileAnalyzer(unittest.TestCase):
+    def test_analyze_file_aborts_when_translation_is_empty(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            file_path = Path(temp_dir) / "photo.jpg"
+            file_path.write_bytes(b"")
+            cache_dir = Path(temp_dir) / "cache"
+            context = AiModelsContext(captioner=Mock())
+            context.captioner.get_caption_for_image_file.return_value = "a caption"
+
+            with (
+                patch.object(file_analyzer, "does_filename_meet_criteria", return_value=True),
+                patch.object(file_analyzer, "get_exif_data_from_file", return_value=None),
+                patch.object(file_analyzer, "translate_english_to_german", return_value=""),
+                patch.object(file_analyzer, "get_keywords_from_caption", return_value=[]),
+            ):
+                with self.assertLogs(file_analyzer.logger, level="ERROR") as logs:
+                    with self.assertRaises(TranslationError):
+                        file_analyzer.analyze_file(
+                            file_path, context, cache_dir=cache_dir
+                        )
+
+            self.assertIn("Translation failed for photo.jpg", logs.output[0])
+            self.assertFalse(
+                get_analysis_cache_file(cache_dir, file_path, "blip-2").exists()
+            )
+
     def test_analyze_file_with_cache(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             # Arrange

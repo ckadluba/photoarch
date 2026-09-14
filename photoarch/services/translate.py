@@ -11,6 +11,10 @@ _GOOGLE_TRANSLATE_URL = "https://translate.googleapis.com/translate_a/single"
 _FALLBACK_TRANSLATE_URL = "https://api.mymemory.translated.net/get"
 
 
+class TranslationError(RuntimeError):
+    """Raised when no translation could be produced."""
+
+
 def _get_with_retry_after(url, **kwargs):
     response = _requests_get(url, **kwargs)
 
@@ -24,7 +28,8 @@ def _get_with_retry_after(url, **kwargs):
             )
         else:
             logger.warning(
-                "Google Translate returned HTTP 429; retrying after %.1f seconds.",
+                "Google Translate returned HTTP 429 (Retry-After: %s); retrying after %.1f seconds.",
+                retry_after,
                 wait_seconds,
             )
             response.close()
@@ -90,7 +95,12 @@ def translate_english_to_german(text: str) -> str:
                 response.status_code,
             )
             result = _translate_with_fallback(text)
-    except Exception:  # noqa: BLE001 - translation failures are non-fatal
-        result = ""
+    except Exception as exc:  # noqa: BLE001 - preserve the original cause
+        logger.error("Translation failed: %s", exc)
+        raise TranslationError("Could not translate English text to German.") from exc
+
+    if not result:
+        logger.error("Translation failed: no translated text was returned.")
+        raise TranslationError("Could not translate English text to German.")
 
     return result
