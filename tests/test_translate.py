@@ -1,5 +1,8 @@
 import unittest
+from unittest.mock import Mock, patch
+
 from photoarch.services import translate
+
 
 class TestTranslate(unittest.TestCase):
     def test_translate_english_to_german(self):
@@ -13,5 +16,24 @@ class TestTranslate(unittest.TestCase):
         result = translate.translate_english_to_german("")
         self.assertIsInstance(result, str)
 
-if __name__ == '__main__':
+    @patch("photoarch.services.translate._requests_get")
+    def test_translate_retries_302_with_location_header(self, mock_get):
+        redirect_response = Mock(
+            status_code=302, headers={"Location": "https://example.com/translated"}
+        )
+        translated_response = Mock(
+            status_code=200, text='<div class="t0">Hallo Welt</div>'
+        )
+        mock_get.side_effect = [redirect_response, translated_response]
+
+        with self.assertLogs(translate.logger, level="WARNING") as logs:
+            result = translate.translate_english_to_german("Hello world")
+
+        self.assertEqual(result, "Hallo Welt")
+        self.assertEqual(mock_get.call_count, 2)
+        self.assertEqual(mock_get.call_args.args[0], "https://example.com/translated")
+        self.assertIn("HTTP 302", logs.output[0])
+
+
+if __name__ == "__main__":
     unittest.main()

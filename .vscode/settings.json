@@ -3,5 +3,10 @@
         "tests"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+    "python.testing.pytestEnabled": true,
+    "chat.tools.terminal.autoApprove": {
+        ".venv/bin/ruff": true,
+        ".venv/bin/black": true,
+        ".venv/bin/python": true
+    }
 }

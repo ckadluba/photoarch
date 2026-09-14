@@ -43,7 +43,7 @@ dependencies = [
     "numpy"
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "pytest",
     "black",
@@ -63,3 +63,8 @@ include = ["photoarch*"]
 
 [tool.setuptools.package-data]
 photoarch = ["py.typed"]
+
+[tool.pytest.ini_options]
+markers = [
+    "longrunning: mark test as long running"
+]

@@ -49,25 +49,19 @@ Download and install ExifTool for video metadata extraction:
 
 ### 2. Python Installation
 
-Install required Python packages:
-```bash
-pip install -r requirements.txt
-```
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) first. ExifTool is installed separately as a system prerequisite; use the project-specific `.venv` for all Python dependencies.
 
-#### Install in Editable Mode
-To install the module in editable mode (for development):
+Create and activate the virtual environment before installing the project dependencies:
 ```bash
-pip install -e .[dev]
-```
-This allows you to make changes to the code and use them immediately without reinstalling.
-
-#### Optional: Create a Virtual Environment
-It is recommended to use a virtual environment:
-```bash
-python -m venv .venv
+uv venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-pip install -e .[dev]
+uv sync --dev
+```
+
+`uv sync --dev` installs the project in editable mode, including the development dependencies, and keeps the exact versions in `uv.lock`. Commands can also be run without activating the environment by prefixing them with `uv run`:
+```bash
+uv run pytest
+uv run photoarch --input input_photos --output sorted_photos --dry-run
 ```
 
 ### 3. Module Installation
@@ -81,7 +75,7 @@ import photoarch
 #### Running as a Standalone Module
 To run from the command line:
 ```bash
-python -m photoarch.main
+uv run python -m photoarch.main
 ```
 
 ### 4. GPU Acceleration
@@ -120,7 +114,7 @@ python -m photoarch.main
 ### Custom Input/Output Directories
 Specify custom input and output directories:
 ```bash
-python -m photoarch --input /path/to/photos --output /path/to/sorted
+uv run photoarch --input /path/to/photos --output /path/to/sorted
 ```
 
 ### Using as a Python Module
@@ -284,7 +278,7 @@ Both models run **fully offline** after an initial download. Models are cached i
 
 Select the model via the `--captioning-ai-model` command-line parameter:
 ```bash
-python -m photoarch.main --captioning-ai-model blip-2
+uv run python -m photoarch.main --captioning-ai-model blip-2
 ```
 
 ### Semantic Caption Comparison
@@ -304,7 +298,7 @@ is_new_folder: decision, ..., caption_diff=0.12, image_diff=0.45 (active=image, 
 
 Enable with:
 ```bash
-python -m photoarch.main --use-image-difference
+uv run python -m photoarch.main --use-image-difference
 ```
 
 The CLIP model is downloaded automatically on first use and cached in the `models/` directory.
@@ -317,16 +311,11 @@ You can add your own analysis, file operations, or services by creating new modu
 
 Tests are located in the `tests/` directory. To run all tests, use:
 ```bash
-pytest
+uv run pytest
 ```
 Or to run a specific test file:
 ```bash
-pytest tests/test_integration.py
-```
-
-Make sure you have the `pytest` package installed:
-```bash
-pip install pytest
+uv run pytest tests/test_integration.py
 ```
 
 Test input files should be placed in `tests/data/input/` as required by the integration test.
