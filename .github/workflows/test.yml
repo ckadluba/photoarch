@@ -22,27 +22,26 @@ jobs:
       uses: actions/setup-python@v7
       with:
         python-version: '3.14'
-        cache: 'pip'
+
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        enable-cache: true
         
     - name: Install exiftool
       run: |
         sudo apt-get update
         sudo apt-get install -y exiftool
         
-    - name: Install dependencies
+    - name: Install project and dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        
-    - name: Build and install photoarch module with dev dependencies
-      run: |
-        pip install -e .[dev]
+        uv sync --locked --dev
         
     - name: Verify module installation
       run: |
-        python -c "import photoarch; print('photoarch module imported successfully')"
-        python -m photoarch.main --help
+        uv run python -c "import photoarch; print('photoarch module imported successfully')"
+        uv run python -m photoarch.main --help
         
     - name: Run tests with pytest
       run: |
-        pytest -v --log-cli-level=INFO tests/
+        uv run pytest -v --log-cli-level=INFO tests/
