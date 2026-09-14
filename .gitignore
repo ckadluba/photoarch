@@ -1,7 +1,7 @@
 # Project-specific folders and files
 .photoarch/
-input_photos/
-sorted_photos/
+input_photos*/
+sorted_photos*/
 models/*
 exiftool.exe
 exiftool_files/
