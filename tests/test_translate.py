@@ -34,6 +34,23 @@ class TestTranslate(unittest.TestCase):
         self.assertEqual(mock_get.call_args.args[0], "https://example.com/translated")
         self.assertIn("HTTP 302", logs.output[0])
 
+    @patch("photoarch.services.translate.time.sleep")
+    @patch("photoarch.services.translate._requests_get")
+    def test_translate_retries_429_after_retry_after(self, mock_get, mock_sleep):
+        rate_limited_response = Mock(status_code=429, headers={"Retry-After": "2"})
+        translated_response = Mock(
+            status_code=200, text='<div class="t0">Hallo Welt</div>'
+        )
+        mock_get.side_effect = [rate_limited_response, translated_response]
+
+        with self.assertLogs(translate.logger, level="WARNING") as logs:
+            result = translate.translate_english_to_german("Hello world")
+
+        self.assertEqual(result, "Hallo Welt")
+        mock_sleep.assert_called_once_with(2.0)
+        self.assertEqual(mock_get.call_count, 2)
+        self.assertIn("HTTP 429", logs.output[0])
+
 
 if __name__ == "__main__":
     unittest.main()
