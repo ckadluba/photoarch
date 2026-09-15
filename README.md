@@ -238,7 +238,7 @@ The module caches analysis results in `.photoarch/analysis/` to speed up repeate
 - Only `.jpg` and `.png` images and `.mp4` videos are processed
 - **GPU Acceleration**: The module automatically detects and uses available GPUs (Apple Silicon MPS, NVIDIA CUDA) for AI model inference. No configuration required. See [GPU Acceleration](#4-gpu-acceleration-optional-but-recommended) for details and performance benchmarks.
 - Reverse geocoding uses OpenStreetMap Nominatim API (rate-limited)
-- Keyword translation uses Google Translate API (may be rate-limited)
+- Caption translation uses the local [OPUS-MT English-to-German model](https://huggingface.co/Helsinki-NLP/opus-mt-en-de) (Helsinki-NLP, CC-BY-4.0). The first translation downloads the model into `models/`; subsequent runs reuse those files. Translation runs on the CPU, requires no API key, and sends no captions to an external service. For fully offline runs after the initial download, set `HF_HUB_OFFLINE=1`. Existing analysis cache entries retain their previous translations; delete `.photoarch/analysis/` to regenerate them.
 - AI image captioning happens offline with a locally downloaded model (GIT or BLIP-2)
 - Semantic caption comparison uses the offline Sentence-Transformer model (paraphrase-multilingual-MiniLM-L12-v2)
 - With `--use-image-difference`, image similarity is computed via the offline CLIP model (clip-ViT-B-32). Both scores are always logged at DEBUG level so the two approaches can be compared.
