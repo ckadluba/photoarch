@@ -6,12 +6,12 @@
 
 ## Build, Test, and Development Commands
 
-- `python -m venv .venv && source .venv/bin/activate` creates an isolated environment.
-- `pip install -e '.[dev]'` installs the package, CLI, pytest, Black, and Ruff in editable mode.
-- `pytest -v --log-cli-level=INFO tests/` runs the same test command used in CI.
-- `pytest -m 'not longrunning' tests/` skips model-heavy integration cases during quick development.
-- `ruff check photoarch tests` checks Python lint issues; `black --check photoarch tests` verifies formatting.
-- `python -m photoarch --input input_photos --output sorted_photos --dry-run` exercises the CLI without copying photos.
+- `uv sync` creates `.venv` and installs the package, CLI, pytest, Black, and Ruff in editable mode from `uv.lock`.
+- `uv run pytest -v --log-cli-level=INFO tests/` runs the same test command used in CI.
+- `uv run pytest -m 'not longrunning' tests/` skips model-heavy integration cases during quick development.
+- `uv run ruff check photoarch tests` checks Python lint issues; `uv run black --check photoarch tests` verifies formatting.
+- `uv run photoarch --input input_photos --output sorted_photos --dry-run` exercises the CLI without copying photos.
+- Run `uv lock` after changing dependencies and commit the updated `uv.lock`; CI installs with `uv sync --locked`.
 
 ExifTool must be installed and on `PATH` for video metadata support and related tests.
 

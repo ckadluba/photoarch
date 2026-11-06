@@ -49,20 +49,20 @@ Download and install ExifTool for video metadata extraction:
 
 ### 2. Python Installation
 
-Install [uv](https://docs.astral.sh/uv/getting-started/installation/) first. ExifTool is installed separately as a system prerequisite; use the project-specific `.venv` for all Python dependencies.
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) first. ExifTool is installed separately as a system prerequisite; uv manages the project-specific `.venv` and all Python dependencies.
 
-Create and activate the virtual environment before installing the project dependencies:
+Install the project and its development dependencies:
 ```bash
-uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv sync --dev
+uv sync
 ```
 
-`uv sync --dev` installs the project in editable mode, including the development dependencies, and keeps the exact versions in `uv.lock`. Commands can also be run without activating the environment by prefixing them with `uv run`:
+`uv sync` creates the `.venv` automatically, installs the project in editable mode, and uses the exact versions pinned in `uv.lock`. There is no need to create or activate the environment manually — prefix commands with `uv run` instead:
 ```bash
 uv run pytest
 uv run photoarch --input input_photos --output sorted_photos --dry-run
 ```
+
+To install exactly the locked versions (for example in CI), use `uv sync --locked`.
 
 ### 3. Module Installation
 
@@ -107,7 +107,7 @@ Ensure the following directories exist (they will be created automatically if mi
 ### Basic Usage
 Place your photos in the `input_photos/` directory and run:
 ```bash
-python -m photoarch.main
+uv run photoarch
 ```
 
 
