@@ -1,6 +1,7 @@
 import unittest
-from photoarch.analysis import exif_reader
 from pathlib import Path
+
+from photoarch.analysis import exif_reader
 
 
 class TestExifReader(unittest.TestCase):
@@ -44,6 +45,26 @@ class TestExifReader(unittest.TestCase):
         exif_data_invalid = "No valid date here"
         dt_invalid = exif_reader.get_date_from_exif_data(exif_data_invalid)
         self.assertIsNone(dt_invalid)
+
+    def test_get_date_from_exif_data_ignores_placeholder_original_date(self):
+        exif_data = (
+            "Date/Time Original              : 0000:00:00 00:00:00\n"
+            "Create Date                     : 2025:03:03 16:51:59"
+        )
+        dt = exif_reader.get_date_from_exif_data(exif_data)
+        self.assertIsNotNone(dt)
+        self.assertEqual(
+            (dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second),
+            (2025, 3, 3, 16, 51, 59),
+        )
+
+    def test_get_date_from_exif_data_returns_none_for_only_invalid_dates(self):
+        exif_data = (
+            "Date/Time Original              : 0000:00:00 00:00:00\n"
+            "Create Date                     : 0000:00:00 00:00:00\n"
+            "File Modification Date/Time     : 0000:00:00 00:00:00+00:00"
+        )
+        self.assertIsNone(exif_reader.get_date_from_exif_data(exif_data))
 
 if __name__ == '__main__':
     unittest.main()

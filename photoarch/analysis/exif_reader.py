@@ -48,29 +48,52 @@ def ensure_exiftool_available():
         )
 
 def get_date_from_exif_data(exif_data: str) -> datetime | None:
-    """Extract date/time from EXIF data string"""
-    match_date_time_original = re.search(r"Date/Time Original\s*:\s*(\d{4}:\d{2}:\d{2} \d{2}:\d{2}:\d{2}\.\d{3}\+\d{2}:\d{2})", exif_data)
-    if match_date_time_original:
-        date_str = match_date_time_original.group(1)
-        return datetime.strptime(date_str, "%Y:%m:%d %H:%M:%S.%f%z")
+    """Extract date/time from EXIF data string.
 
-    match_date_time_original_no_tz = re.search(r"Date/Time Original\s*:\s*(\d{4}:\d{2}:\d{2} \d{2}:\d{2}:\d{2})", exif_data)
-    if match_date_time_original_no_tz:
-        date_str = match_date_time_original_no_tz.group(1)
-        return datetime.strptime(date_str, "%Y:%m:%d %H:%M:%S")
+    Invalid or placeholder timestamps (for example "0000:00:00 00:00:00")
+    are skipped so that the next available date field can be used.
+    """
+    date_time_patterns = (
+        (
+            r"Date/Time Original\s*:\s*(\d{4}:\d{2}:\d{2} \d{2}:\d{2}:\d{2}\.\d{3}\+\d{2}:\d{2})",
+            "%Y:%m:%d %H:%M:%S.%f%z",
+        ),
+        (
+            r"Date/Time Original\s*:\s*(\d{4}:\d{2}:\d{2} \d{2}:\d{2}:\d{2})",
+            "%Y:%m:%d %H:%M:%S",
+        ),
+        (
+            r"Create Date\s*:\s*(\d{4}:\d{2}:\d{2} \d{2}:\d{2}:\d{2})",
+            "%Y:%m:%d %H:%M:%S",
+        ),
+        # Fallback of last resort: use file modification date/time
+        (
+            r"File Modification Date/Time\s*:\s*(\d{4}:\d{2}:\d{2} \d{2}:\d{2}:\d{2}\+\d{2}:\d{2})",
+            "%Y:%m:%d %H:%M:%S%z",
+        ),
+    )
 
-    match_create_date = re.search(r"Create Date\s*:\s*(\d{4}:\d{2}:\d{2} \d{2}:\d{2}:\d{2})", exif_data)
-    if match_create_date:
-        date_str = match_create_date.group(1)
-        return datetime.strptime(date_str, "%Y:%m:%d %H:%M:%S")
+    for pattern, date_format in date_time_patterns:
+        match = re.search(pattern, exif_data)
+        if not match:
+            continue
+        date_time = _parse_exif_datetime(match.group(1), date_format)
+        if date_time is not None:
+            return date_time
 
-    # Fallback of last resort: use file modification date/time
-    match_file_modification_date_time = re.search(r"File Modification Date/Time\s*:\s*(\d{4}:\d{2}:\d{2} \d{2}:\d{2}:\d{2}\+\d{2}:\d{2})", exif_data)
-    if match_file_modification_date_time:
-        date_str = match_file_modification_date_time.group(1)
-        return datetime.strptime(date_str, "%Y:%m:%d %H:%M:%S%z")
-    
     return None
+
+
+def _parse_exif_datetime(date_str: str, date_format: str) -> datetime | None:
+    try:
+        return datetime.strptime(date_str, date_format)
+    except ValueError:
+        logger.debug(
+            "Ignoring invalid EXIF date/time value %r (expected format %r).",
+            date_str,
+            date_format,
+        )
+        return None
 
 def get_camera_from_exif_data(exif_data: str) -> str | None:
     """Extract camera make from EXIF data string"""
